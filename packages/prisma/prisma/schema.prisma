@@ -1,0 +1,243 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  COMMERCIAL
+  MANAGER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  SCHEDULED
+  ATTENDED
+  WON
+  LOST
+}
+
+enum LeadChannel {
+  META
+  GOOGLE
+  ORGANIC
+  REFERRAL
+  OTHER
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
+}
+
+enum AdChannel {
+  META
+  GOOGLE
+}
+
+enum ConnectionStatus {
+  ACTIVE
+  EXPIRED
+  ERROR
+  DISCONNECTED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole @default(COMMERCIAL)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  clients      UserClient[]
+  leads        Lead[]        @relation("AssignedLeads")
+  notes        LeadNote[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       UserClient[]
+  leads       Lead[]
+  connections AdAccountConnection[]
+  auditLogs   AuditLog[]
+
+  @@map("clients")
+}
+
+model UserClient {
+  userId   String
+  clientId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@id([userId, clientId])
+  @@map("user_clients")
+}
+
+model Lead {
+  id           String      @id @default(uuid())
+  clientId     String
+  name         String
+  phone        String?
+  email        String?
+  origin       String?
+  channel      LeadChannel @default(OTHER)
+  campaignId   String?
+  campaignName String?
+  status       LeadStatus  @default(NEW)
+  assignedToId String?
+  observations String?
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmContent   String?
+  utmTerm      String?
+  gclid        String?
+  fbclid       String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  client       Client        @relation(fields: [clientId], references: [id])
+  assignedTo   User?         @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  notes        LeadNote[]
+  appointments Appointment[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([channel])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model LeadNote {
+  id        String   @id @default(uuid())
+  leadId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("lead_notes")
+}
+
+model Appointment {
+  id        String            @id @default(uuid())
+  leadId    String
+  dateTime  DateTime
+  procedure String?
+  status    AppointmentStatus @default(CONFIRMED)
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([dateTime])
+  @@map("appointments")
+}
+
+model AdAccountConnection {
+  id                   String           @id @default(uuid())
+  clientId             String
+  channel              AdChannel
+  accountId            String
+  accountName          String?
+  accessTokenEncrypted String
+  refreshTokenEncrypted String?
+  expiresAt            DateTime?
+  status               ConnectionStatus @default(ACTIVE)
+  lastSyncAt           DateTime?
+  errorMessage         String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  client    Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  snapshots CampaignSnapshotDaily[]
+
+  @@unique([clientId, channel, accountId])
+  @@map("ad_account_connections")
+}
+
+model CampaignSnapshotDaily {
+  id             String    @id @default(uuid())
+  connectionId   String
+  date           DateTime  @db.Date
+  campaignId     String
+  campaignName   String
+  adsetId        String?
+  adsetName      String?
+  channel        AdChannel
+  spend          Float     @default(0)
+  impressions    Int       @default(0)
+  clicks         Int       @default(0)
+  ctr            Float     @default(0)
+  cpc            Float     @default(0)
+  cpm            Float     @default(0)
+  leads          Int       @default(0)
+  conversions    Int       @default(0)
+  reach          Int       @default(0)
+  frequency      Float     @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  connection AdAccountConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, date, campaignId, adsetId])
+  @@index([connectionId])
+  @@index([date])
+  @@index([channel])
+  @@map("campaign_snapshots_daily")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  clientId  String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id])
+  client Client? @relation(fields: [clientId], references: [id])
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
