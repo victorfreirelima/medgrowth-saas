@@ -11,6 +11,7 @@
         "test:e2e": "jest --config ./test/jest-e2e.json"
     },
     "dependencies": {
+        "@fastify/static": "7.0.3",
         "@medgrowth/prisma": "workspace:*",
         "@nestjs/bull": "^10.1.1",
         "@nestjs/bullmq": "^11.0.4",
