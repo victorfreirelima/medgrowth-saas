@@ -21,12 +21,30 @@ import { AdsModule } from './ads/ads.module';
         }]),
         BullModule.forRootAsync({
             imports: [ConfigModule],
-            useFactory: (config: ConfigService) => ({
-                connection: {
-                    host: config.get('REDIS_HOST', 'localhost'),
-                    port: config.get('REDIS_PORT', 6379),
-                },
-            }),
+            useFactory: (config: ConfigService) => {
+                const redisUrl = config.get('REDIS_URL');
+                if (redisUrl) {
+                    try {
+                        const url = new URL(redisUrl);
+                        return {
+                            connection: {
+                                host: url.hostname,
+                                port: parseInt(url.port, 10),
+                                username: url.username || undefined,
+                                password: url.password || undefined,
+                            },
+                        };
+                    } catch (e) {
+                        console.error('Failed to parse REDIS_URL', e);
+                    }
+                }
+                return {
+                    connection: {
+                        host: config.get('REDIS_HOST', 'localhost'),
+                        port: config.get('REDIS_PORT', 6379),
+                    },
+                };
+            },
             inject: [ConfigService],
         }),
         PrismaModule,
