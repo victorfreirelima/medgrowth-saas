@@ -4,7 +4,7 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "pnpm --filter @medgrowth/prisma exec prisma migrate reset --force && pnpm --filter @medgrowth/prisma seed && pnpm --filter api start",
+        "startCommand": "pnpm --filter @medgrowth/prisma migrate:deploy && pnpm --filter api start",
         "numReplicas": 1
     }
 }
