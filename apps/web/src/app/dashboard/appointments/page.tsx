@@ -15,6 +15,24 @@ const STATUS_COLORS: Record<string, string> = {
     NO_SHOW: 'bg-orange-100 text-orange-700', COMPLETED: 'bg-blue-100 text-blue-700',
 };
 
+type AppointmentStatus = 'CONFIRMED' | 'CANCELLED' | 'NO_SHOW' | 'COMPLETED';
+
+interface Lead {
+    id: string;
+    name: string;
+    client?: { name: string };
+    phone?: string;
+}
+
+interface Appointment {
+    id: string;
+    dateTime: string;
+    procedure?: string;
+    status: AppointmentStatus;
+    lead?: Lead;
+}
+
+
 export default function AppointmentsPage() {
     const { data: session } = useSession();
     const qc = useQueryClient();
@@ -83,7 +101,7 @@ export default function AppointmentsPage() {
                                         <p className="text-muted-foreground text-sm">Nenhum agendamento encontrado</p>
                                     </td>
                                 </tr>
-                            ) : data?.data?.map((apt: any) => (
+                            ) : data?.data?.map((apt: Appointment) => (
                                 <tr key={apt.id} className="hover:bg-muted/20 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="text-sm font-semibold text-foreground">
@@ -104,7 +122,7 @@ export default function AppointmentsPage() {
                                             <select
                                                 className={`status-badge border-0 cursor-pointer ${STATUS_COLORS[apt.status]}`}
                                                 value={apt.status}
-                                                onChange={(e) => updateMutation.mutate({ id: apt.id, data: { status: e.target.value } })}
+                                                onChange={(e) => updateMutation.mutate({ id: apt.id, data: { status: e.target.value as AppointmentStatus } })}
                                             >
                                                 {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                                             </select>
@@ -150,7 +168,7 @@ export default function AppointmentsPage() {
                                 <select className="w-full px-3 py-2 rounded-xl border border-border text-sm"
                                     value={form.leadId} onChange={(e) => setForm({ ...form, leadId: e.target.value })}>
                                     <option value="">Selecione o lead</option>
-                                    {leadsData?.data?.map((l: any) => (
+                                    {leadsData?.data?.map((l: Lead) => (
                                         <option key={l.id} value={l.id}>{l.name} — {l.client?.name}</option>
                                     ))}
                                 </select>

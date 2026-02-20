@@ -8,10 +8,12 @@ const api = axios.create({
 
 // Attach JWT token from session
 api.interceptors.request.use(async (config) => {
-    const session = await getSession();
-    if (session?.user) {
-        const token = (session.user as { accessToken?: string }).accessToken;
-        if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (typeof window !== 'undefined') {
+        const session = await getSession();
+        if (session?.user) {
+            const token = (session.user as { accessToken?: string }).accessToken;
+            if (token) config.headers.Authorization = `Bearer ${token}`;
+        }
     }
     return config;
 });
