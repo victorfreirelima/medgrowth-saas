@@ -139,79 +139,120 @@ export default function SettingsPage() {
             )}
 
             {tab === 'connections' && (
-                <div className="space-y-4">
-                    <div className="bg-white rounded-3xl border border-border shadow-sm overflow-hidden">
-                        <div className="px-8 py-5 border-b border-border flex items-center justify-between bg-muted/10">
-                            <h2 className="font-bold text-lg">Canais Conectados</h2>
-                            <button onClick={() => setShowConnModal(true)}
-                                className="px-4 py-2 bg-foreground text-background rounded-xl text-sm font-bold shadow-lg shadow-black/10 hover:scale-[1.02] active:scale-[0.98] transition">
-                                + Conectar Novo Canal
-                            </button>
-                        </div>
-                        <div className="divide-y divide-border">
-                            {(connections || []).length === 0 ? (
-                                <div className="py-20 text-center">
-                                    <div className="inline-flex w-16 h-16 items-center justify-center rounded-3xl bg-muted/50 text-3xl mb-4 grayscale">🔌</div>
-                                    <p className="text-foreground font-bold text-lg">Nenhuma conexão ativa</p>
-                                    <p className="text-muted-foreground text-sm max-w-sm mx-auto mt-2">
-                                        Conecte as contas Meta Ads ou Google Ads dos seus clientes para iniciar a coleta automática de métricas.
-                                    </p>
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Meta Ads Card */}
+                        <div className="bg-white rounded-[32px] border border-border shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-8 pb-4 flex items-center justify-between">
+                                <div className="p-3 rounded-2xl bg-[#1877F2]/10 border border-[#1877F2]/20">
+                                    <svg className="w-8 h-8 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                                    </svg>
                                 </div>
-                            ) : (connections || []).map((conn) => (
-                                <div key={conn.id} className="px-8 py-5 flex items-center justify-between hover:bg-muted/30 transition-colors group">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${conn.channel === 'META' ? 'bg-[#1877F2]/10 border border-[#1877F2]/20' : 'bg-[#4285F4]/10 border border-[#4285F4]/20'}`}>
-                                            {conn.channel === 'META' ? 'fb' : 'G'}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold">{conn.accountName || 'Conta de Anúncios'}</p>
-                                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-tight flex items-center gap-2">
-                                                <span className="text-foreground">{conn.client?.name}</span>
-                                                <span className="opacity-30">•</span>
-                                                <span>ID: {conn.accountId}</span>
-                                                {conn.lastSyncAt && (
-                                                    <>
-                                                        <span className="opacity-30">•</span>
-                                                        <span className="text-blue-600">Sincronizado: {new Date(conn.lastSyncAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </>
-                                                )}
+                                {connections?.find(c => c.channel === 'META') ? (
+                                    <span className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-wider rounded-lg border border-green-200">Conectado</span>
+                                ) : (
+                                    <span className="px-3 py-1 bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-wider rounded-lg border border-border/50">Não Conectado</span>
+                                )}
+                            </div>
+                            <div className="px-8 py-2">
+                                <h3 className="text-xl font-black">Meta Ads</h3>
+                                <p className="text-muted-foreground text-sm mt-1">Sincronize campanhas do Facebook e Instagram Ads.</p>
+                            </div>
+                            <div className="mt-auto p-8 pt-4">
+                                {connections?.find(c => c.channel === 'META') ? (
+                                    <div className="space-y-4">
+                                        <div className="bg-muted/30 rounded-2xl p-4 border border-border/50">
+                                            <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Último Sync</p>
+                                            <p className="text-xs font-bold font-mono">
+                                                {connections.find(c => c.channel === 'META')?.lastSyncAt
+                                                    ? new Date(connections.find(c => c.channel === 'META')!.lastSyncAt!).toLocaleString('pt-BR')
+                                                    : 'Nunca sincronizado'}
                                             </p>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg ${conn.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                            {conn.status === 'ACTIVE' ? 'ONLINE' : conn.status}
-                                        </span>
                                         <button
-                                            onClick={() => handleSync(conn.id)}
-                                            disabled={syncLoading === conn.id}
-                                            className="px-4 py-1.5 rounded-xl bg-muted text-foreground text-xs font-bold hover:bg-muted/70 transition disabled:opacity-40 flex items-center gap-2"
-                                        >
-                                            {syncLoading === conn.id ? '⏳ Sync...' : (
-                                                <>🔄 <span className="hidden sm:inline">Sincronizar</span></>
-                                            )}
+                                            onClick={() => handleSync(connections.find(c => c.channel === 'META')!.id)}
+                                            disabled={syncLoading === connections.find(c => c.channel === 'META')?.id}
+                                            className="w-full h-12 bg-foreground text-background rounded-2xl text-sm font-black hover:scale-[1.02] active:scale-[0.98] transition disabled:opacity-50">
+                                            {syncLoading === connections.find(c => c.channel === 'META')?.id ? 'Sincronizando...' : 'Sincronizar agora'}
                                         </button>
                                         <button
-                                            onClick={() => deleteConnMutation.mutate(conn.id)}
-                                            className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition"
-                                            title="Remover conexão"
-                                        >
-                                            ✕
+                                            onClick={() => deleteConnMutation.mutate(connections.find(c => c.channel === 'META')!.id)}
+                                            className="w-full text-[10px] font-black uppercase text-red-500 hover:text-red-600 transition tracking-widest pt-2">
+                                            Remover Conexão
                                         </button>
                                     </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowConnModal(true)}
+                                        className="w-full h-14 bg-[#1877F2] text-white rounded-2xl text-sm font-black shadow-xl shadow-[#1877F2]/20 hover:scale-[1.02] active:scale-[0.98] transition">
+                                        Conectar Meta Ads
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Google Ads Card */}
+                        <div className="bg-white rounded-[32px] border border-border shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-8 pb-4 flex items-center justify-between">
+                                <div className="p-3 rounded-2xl bg-[#4285F4]/10 border border-[#4285F4]/20">
+                                    <svg className="w-8 h-8 text-[#4285F4]" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.92 3.32-2.12 4.52-1.32 1.32-3.4 2.12-6.52 2.12-5.2 0-9.44-4.2-9.44-9.44s4.24-9.44 9.44-9.44c2.84 0 4.92 1.12 6.44 2.56l2.32-2.32C18.12 2.12 15.44 1 12.48 1s-6.44 2.4-8.76 4.72c-2.32 2.32-3.72 5.52-3.72 8.76s1.4 6.44 3.72 8.76c2.32 2.32 5.8 3.76 8.76 3.76 2.68 0 4.92-.88 6.72-2.68 1.84-1.84 2.64-4.32 2.64-6.32 0-.64-.04-1.28-.16-1.88h-9.2z" />
+                                    </svg>
                                 </div>
-                            ))}
+                                {connections?.find(c => c.channel === 'GOOGLE') ? (
+                                    <span className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-wider rounded-lg border border-green-200">Conectado</span>
+                                ) : (
+                                    <span className="px-3 py-1 bg-muted text-muted-foreground text-[10px] font-black uppercase tracking-wider rounded-lg border border-border/50">Não Conectado</span>
+                                )}
+                            </div>
+                            <div className="px-8 py-2">
+                                <h3 className="text-xl font-black">Google Ads</h3>
+                                <p className="text-muted-foreground text-sm mt-1">Sincronize campanhas de Busca, Display e YouTube.</p>
+                            </div>
+                            <div className="mt-auto p-8 pt-4">
+                                {connections?.find(c => c.channel === 'GOOGLE') ? (
+                                    <div className="space-y-4">
+                                        <div className="bg-muted/30 rounded-2xl p-4 border border-border/50">
+                                            <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Último Sync</p>
+                                            <p className="text-xs font-bold font-mono">
+                                                {connections.find(c => c.channel === 'GOOGLE')?.lastSyncAt
+                                                    ? new Date(connections.find(c => c.channel === 'GOOGLE')!.lastSyncAt!).toLocaleString('pt-BR')
+                                                    : 'Nunca sincronizado'}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleSync(connections.find(c => c.channel === 'GOOGLE')!.id)}
+                                            disabled={syncLoading === connections.find(c => c.channel === 'GOOGLE')?.id}
+                                            className="w-full h-12 bg-foreground text-background rounded-2xl text-sm font-black hover:scale-[1.02] active:scale-[0.98] transition disabled:opacity-50">
+                                            {syncLoading === connections.find(c => c.channel === 'GOOGLE')?.id ? 'Sincronizando...' : 'Sincronizar agora'}
+                                        </button>
+                                        <button
+                                            onClick={() => deleteConnMutation.mutate(connections.find(c => c.channel === 'GOOGLE')!.id)}
+                                            className="w-full text-[10px] font-black uppercase text-red-500 hover:text-red-600 transition tracking-widest pt-2">
+                                            Remover Conexão
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowConnModal(true)}
+                                        className="w-full h-14 bg-[#4285F4] text-white rounded-2xl text-sm font-black shadow-xl shadow-[#4285F4]/20 hover:scale-[1.02] active:scale-[0.98] transition">
+                                        Conectar Google Ads
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="p-6 rounded-3xl bg-gradient-to-br from-foreground to-foreground/80 text-background border border-border shadow-xl">
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-xl">💡</div>
+                    <div className="p-8 rounded-[40px] bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
+                        <div className="relative flex items-center gap-6">
+                            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shadow-inner">🔒</div>
                             <div>
-                                <h3 className="font-bold text-lg mb-1">Integração OAuth de Produção</h3>
-                                <p className="text-white/70 text-sm leading-relaxed max-w-2xl">
-                                    O MedGrowth usa o protocolo OAuth 2.0 para garantir que você nunca precise digitar senhas de terceiros.
-                                    Seus tokens de acesso são armazenados com criptografia <strong>AES-256</strong> em nível de banco de dados e nunca são expostos ao navegador.
+                                <h3 className="text-xl font-black mb-1">Segurança de Dados</h3>
+                                <p className="text-white/80 text-sm leading-relaxed max-w-2xl font-medium">
+                                    Suas conexões usam criptografia de ponta a ponta (AES-256). O MedGrowth nunca armazena suas senhas,
+                                    apenas tokens de acesso autorizados via APIs oficiais do Facebook e Google.
                                 </p>
                             </div>
                         </div>
