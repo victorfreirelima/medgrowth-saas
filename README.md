@@ -16,34 +16,43 @@ Sistema completo de gestão de leads, agendamentos e performance de anúncios pa
 - [x] **OAuth Real**: Integração oficial com Meta Ads e Google Ads.
 - [x] **Automação**: Sync diário via background jobs (BullMQ).
 
-## 🛠️ Configuração de Produção
+## 🛠️ OAuth Production Setup
 
-### 1. Meta Ads (Facebook)
-- Vá em [developers.facebook.com](https://developers.facebook.com).
-- Crie um App do tipo "Business" ou "Consumer".
-- Adicione o produto "Facebook Login for Business" ou "Marketing API".
-- Configure a Redirect URI: `https://seu-backend.railway.app/ads/meta/callback`.
-- Pegue o `App ID` e `App Secret`.
+### 1. Meta Ads (Facebook Developer)
+- Vá em [developers.facebook.com](https://developers.facebook.com) e crie/acesse seu App ("Business").
+- Adicione o produto "Facebook Login for Business".
+- **Valid OAuth Redirect URIs**: `https://api-production-8d75.up.railway.app/ads/meta/callback`
+- **Permissões mínimas necessárias**: `ads_read`, `ads_management`, `business_management`.
+- Pegue o `App ID` e `App Secret` e coloque na Railway.
 
-### 2. Google Ads
+### 2. Google Ads (Google Cloud Console)
 - Vá em [console.cloud.google.com](https://console.cloud.google.com).
-- Crie um projeto e configure a "OAuth Consent Screen".
-- Crie credenciais de "OAuth Client ID" (Web Application).
-- Configure a Redirect URI: `https://seu-backend.railway.app/ads/google/callback`.
-- Pegue o `Client ID` e `Client Secret`.
+- Em "APIs & Services" > "Credentials", crie um "OAuth Client ID" (Web Application).
+- **Authorized JavaScript origins**: `https://web-six-mu-72.vercel.app`
+- **Authorized redirect URIs**: `https://api-production-8d75.up.railway.app/ads/google/callback`
+- **Escopos mínimos necessários**: Google Ads API (adwords).
+- Pegue o `Client ID` e `Client Secret` e coloque na Railway.
 
-### 3. Variáveis de Ambiente
-Copie o `.env.example` para `.env` e preencha as chaves:
+### 3. Variáveis de Ambiente (Railway - Serviço API)
+Certifique-se de configurar (ou atualizar) estas variáveis na aba Variables da sua Railway:
 ```bash
-# Essencial para segurança (32 caracteres)
-ENCRYPTION_KEY="sua-chave-secreta-de-32-chars"
+META_APP_ID="seu-app-id"
+META_APP_SECRET="seu-app-secret"
+META_REDIRECT_URI="https://api-production-8d75.up.railway.app/ads/meta/callback"
 
-# OAuth
-META_APP_ID="..."
-META_APP_SECRET="..."
-GOOGLE_CLIENT_ID="..."
-GOOGLE_CLIENT_SECRET="..."
+GOOGLE_CLIENT_ID="seu-client-id"
+GOOGLE_CLIENT_SECRET="seu-client-secret"
+GOOGLE_REDIRECT_URI="https://api-production-8d75.up.railway.app/ads/google/callback"
+
+ALLOWED_ORIGINS="https://web-six-mu-72.vercel.app"
 ```
+
+### 4. Variáveis de Ambiente (Vercel - Frontend Web)
+Certifique-se de configurar estas variáveis no seu projeto Vercel:
+```bash
+NEXT_PUBLIC_API_URL="https://api-production-8d75.up.railway.app"
+```
+
 
 ## 📦 Deployment
 

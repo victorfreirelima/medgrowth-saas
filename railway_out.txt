@@ -1,0 +1,100 @@
+> prisma migrate deploy
+
+
+> @medgrowth/prisma@1.0.0 migrate:deploy /app/packages/prisma
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+
+1 migration found in prisma/migrations
+
+Starting Container
+
+No pending migrations to apply.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 5.22.0 -> 7.4.1                       │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+
+> api@1.0.0 start /app/apps/api
+> node dist/main
+
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +15ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mClientsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLeadsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppointmentsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDashboardModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth}:[39m[38;5;3m +39ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/users}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/clients, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mClientsController {/clients}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/clients, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/clients/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/clients, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/clients/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLeadsController {/leads}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/leads, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/leads/funnel, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/leads/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/leads/:clientId, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/leads/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/leads/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/leads/:id/notes, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppointmentsController {/appointments}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/appointments, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/appointments/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/appointments, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/appointments/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/appointments/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDashboardController {/dashboard}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dashboard/kpis, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dashboard/time-series, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dashboard/campaigns, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdsController {/ads}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/connections, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/connections, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/connections/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/connections/:id/sync, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/meta/oauth-url, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/google/oauth-url, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/meta/callback, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ads/google/callback, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +75ms[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m🚀 API running on http://localhost:3001[39m
+[32m[Nest] 66  - [39m02/20/2026, 9:52:31 PM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m📖 Swagger docs: http://localhost:3001/docs[39m
+[31m[Nest] 66  - [39m02/20/2026, 10:06:57 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39m[31msecretOrPrivateKey must have a value[39m
+Error: secretOrPrivateKey must have a value
+    at module.exports [as sign] (/app/node_modules/.pnpm/jsonwebtoken@9.0.2/node_modules/jsonwebtoken/sign.js:111:20)
+    at JwtService.sign (/app/node_modules/.pnpm/@nestjs+jwt@10.2.0_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.3_refl_ksjylkesbyziqp2cxs2k2e77ia/node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+    at AuthService.generateTokens (/app/apps/api/dist/auth/auth.service.js:72:46)
+    at AuthService.login (/app/apps/api/dist/auth/auth.service.js:35:21)
+    at async /app/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.3_re_migw735pubjihei37ej2h4zjv4/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at async Object.<anonymous> (/app/node_modules/.pnpm/@nestjs+core@10.4.22_@nestjs+common@10.4.22_class-transformer@0.5.1_class-validator@0.14.3_re_migw735pubjihei37ej2h4zjv4/node_modules/@nestjs/core/router/router-proxy.js:9:17)

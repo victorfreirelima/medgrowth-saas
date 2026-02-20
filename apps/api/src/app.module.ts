@@ -11,6 +11,7 @@ import { LeadsModule } from './leads/leads.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AdsModule } from './ads/ads.module';
+import { AppController } from './app.controller';
 
 @Module({
     imports: [
@@ -56,5 +57,6 @@ import { AdsModule } from './ads/ads.module';
         DashboardModule,
         AdsModule,
     ],
+    controllers: [AppController]
 })
 export class AppModule { }

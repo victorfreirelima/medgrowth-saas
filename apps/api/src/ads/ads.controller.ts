@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { IsEnum, IsString, IsOptional, IsUUID } from 'class-validator';
 import { AdChannel } from '@prisma/client';
@@ -59,12 +59,14 @@ export class AdsController {
 
     @Get('meta/callback')
     async metaCallback(@Query('code') code: string, @Query('state') state: string) {
+        if (!code || !state) throw new BadRequestException('Missing authorization code or state');
         await this.adsService.handleMetaCallback(code, state);
         return { message: 'Meta Ads connected successfully. You can close this window.' };
     }
 
     @Get('google/callback')
     async googleCallback(@Query('code') code: string, @Query('state') state: string) {
+        if (!code || !state) throw new BadRequestException('Missing authorization code or state');
         await this.adsService.handleGoogleCallback(code, state);
         return { message: 'Google Ads connected successfully. You can close this window.' };
     }
