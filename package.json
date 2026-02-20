@@ -8,7 +8,7 @@
     "build": "pnpm build:api && pnpm build:web",
     "build:api": "pnpm --filter api build",
     "build:web": "pnpm --filter web build",
-    "start:api": "pnpm --filter api start:prod",
+    "start:api": "pnpm --filter api start",
     "db:generate": "pnpm --filter @medgrowth/prisma generate",
     "db:migrate:deploy": "pnpm --filter @medgrowth/prisma migrate:deploy",
     "db:seed": "pnpm --filter @medgrowth/prisma seed",
