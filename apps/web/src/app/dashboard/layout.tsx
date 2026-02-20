@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (!session) return null;
 
-    const userRole = (session.user as any)?.role;
+    const userRole = (session.user as { role?: string })?.role;
     const filteredNav = navItems.filter((item) => {
         if (ADMIN_ONLY.includes(item.href) && userRole !== 'ADMIN') return false;
         return true;

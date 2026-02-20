@@ -9,8 +9,8 @@ const api = axios.create({
 // Attach JWT token from session
 api.interceptors.request.use(async (config) => {
     const session = await getSession();
-    if (session) {
-        const token = (session.user as any).accessToken;
+    if (session?.user) {
+        const token = (session.user as { accessToken?: string }).accessToken;
         if (token) config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -21,7 +21,9 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         if (error.response?.status === 401) {
-            window.location.href = '/login';
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     },

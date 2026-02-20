@@ -2,10 +2,27 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as Sentry from '@sentry/nestjs';
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { AppModule } from './app.module';
 
 async function bootstrap() {
     const logger = new Logger('Bootstrap');
+
+    // Initialize Sentry before the app
+    if (process.env.SENTRY_DSN) {
+        Sentry.init({
+            dsn: process.env.SENTRY_DSN,
+            integrations: [
+                nodeProfilingIntegration(),
+            ],
+            tracesSampleRate: 1.0,
+            profilesSampleRate: 1.0,
+            environment: process.env.NODE_ENV || 'development',
+        });
+        logger.log('Sentry initialized');
+    }
+
     const app = await NestFactory.create<NestFastifyApplication>(
         AppModule,
         new FastifyAdapter({ logger: false }),

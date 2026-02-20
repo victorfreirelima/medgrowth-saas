@@ -18,7 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AppointmentsPage() {
     const { data: session } = useSession();
     const qc = useQueryClient();
-    const userRole = (session?.user as any)?.role;
+    const userRole = (session?.user as { role?: string })?.role;
     const [showModal, setShowModal] = useState(false);
     const [page, setPage] = useState(1);
     const [form, setForm] = useState({ leadId: '', dateTime: '', procedure: '', status: 'CONFIRMED' });
@@ -33,11 +33,11 @@ export default function AppointmentsPage() {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data: any) => appointmentsApi.create(data),
+        mutationFn: (data: unknown) => appointmentsApi.create(data),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['appointments'] }); setShowModal(false); },
     });
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) => appointmentsApi.update(id, data),
+        mutationFn: ({ id, data }: { id: string; data: unknown }) => appointmentsApi.update(id, data),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['appointments'] }),
     });
 

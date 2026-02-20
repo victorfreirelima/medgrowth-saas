@@ -1,35 +1,22 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import * as crypto from 'crypto';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdChannel, ConnectionStatus, UserRole } from '@prisma/client';
-
-const ALGORITHM = 'aes-256-cbc';
-const IV_LENGTH = 16;
-
-function encrypt(text: string, key: string): string {
-    const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(key, 'utf8').slice(0, 32), iv);
-    let encrypted = cipher.update(text);
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
-    return iv.toString('hex') + ':' + encrypted.toString('hex');
-}
-
-function decrypt(text: string, key: string): string {
-    const [ivHex, encryptedHex] = text.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const encrypted = Buffer.from(encryptedHex, 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(key, 'utf8').slice(0, 32), iv);
-    let decrypted = decipher.update(encrypted);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
-}
+import { encrypt } from '../common/utils/crypto.util';
 
 @Injectable()
 export class AdsService {
     private readonly encKey: string;
 
-    constructor(private readonly prisma: PrismaService) {
-        this.encKey = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012';
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly config: ConfigService,
+        @InjectQueue('ads-sync') private adsSyncQueue: Queue,
+    ) {
+        this.encKey = this.config.get<string>('ENCRYPTION_KEY') || '12345678901234567890123456789012';
     }
 
     private assertClientAccess(user: any, clientId: string) {
@@ -49,8 +36,7 @@ export class AdsService {
             orderBy: { createdAt: 'desc' },
         });
 
-        // Never expose tokens to frontend
-        return connections.map(({ accessTokenEncrypted, refreshTokenEncrypted, ...c }) => ({
+        return connections.map(({ accessTokenEncrypted, refreshTokenEncrypted, ...c }: any) => ({
             ...c,
             hasToken: !!accessTokenEncrypted,
         }));
@@ -101,70 +87,139 @@ export class AdsService {
         if (!conn) throw new NotFoundException('Connection not found');
         this.assertClientAccess(user, conn.clientId);
 
-        // In production this would enqueue a BullMQ job
-        // For MVP, we simulate a sync by inserting today's snapshot
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        await this.adsSyncQueue.add('sync-job', { connectionId });
 
-        const mockCampaigns = [
-            { id: `${conn.channel}_camp_1`, name: `${conn.channel} Campaign A` },
-            { id: `${conn.channel}_camp_2`, name: `${conn.channel} Campaign B` },
-        ];
-
-        for (const camp of mockCampaigns) {
-            const spend = parseFloat((Math.random() * 150 + 30).toFixed(2));
-            const impressions = Math.floor(Math.random() * 15000 + 3000);
-            const clicks = Math.floor(impressions * (Math.random() * 0.04 + 0.01));
-            const leads = Math.floor(clicks * (Math.random() * 0.1 + 0.02));
-            await this.prisma.campaignSnapshotDaily.upsert({
-                where: {
-                    connectionId_date_campaignId_adsetId: {
-                        connectionId: conn.id,
-                        date: today,
-                        campaignId: camp.id,
-                        adsetId: null as unknown as string,
-                    },
-                },
-                update: { spend, impressions, clicks, leads, ctr: clicks / impressions, cpc: spend / clicks, cpm: (spend / impressions) * 1000 },
-                create: {
-                    connectionId: conn.id,
-                    date: today,
-                    campaignId: camp.id,
-                    campaignName: camp.name,
-                    channel: conn.channel,
-                    spend, impressions, clicks, leads,
-                    ctr: clicks / impressions,
-                    cpc: clicks > 0 ? spend / clicks : 0,
-                    cpm: (spend / impressions) * 1000,
-                },
-            });
-        }
-
-        await this.prisma.adAccountConnection.update({
-            where: { id: connectionId },
-            data: { lastSyncAt: new Date(), status: ConnectionStatus.ACTIVE },
-        });
-
-        return { message: 'Sync completed', connectionId, syncedAt: new Date() };
+        return { message: 'Sync job added to queue', connectionId, enqueuedAt: new Date() };
     }
 
     async getMetaOAuthUrl(clientId: string) {
-        const appId = process.env.META_APP_ID || 'YOUR_META_APP_ID';
-        const redirectUri = `${process.env.API_URL}/ads/meta/callback`;
-        const scope = 'ads_read,ads_management,business_management';
+        const appId = this.config.get<string>('META_APP_ID');
+        const redirectUri = this.config.get<string>('META_REDIRECT_URI');
+        const version = this.config.get<string>('META_API_VERSION') || 'v19.0';
         const state = Buffer.from(JSON.stringify({ clientId })).toString('base64');
+
         return {
-            url: `https://www.facebook.com/${process.env.META_API_VERSION || 'v19.0'}/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`,
+            url: `https://www.facebook.com/${version}/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri || '')}&scope=ads_read,ads_management,business_management&state=${state}`,
         };
     }
 
+    async handleMetaCallback(code: string, state: string) {
+        if (!state) throw new ForbiddenException('Invalid OAuth state');
+        const { clientId } = JSON.parse(Buffer.from(state, 'base64').toString());
+        const appId = this.config.get<string>('META_APP_ID');
+        const appSecret = this.config.get<string>('META_APP_SECRET');
+        const redirectUri = this.config.get<string>('META_REDIRECT_URI');
+
+        const tokenRes = await axios.get(`https://graph.facebook.com/v19.0/oauth/access_token`, {
+            params: {
+                client_id: appId || '',
+                client_secret: appSecret || '',
+                redirect_uri: redirectUri || '',
+                code,
+            },
+        });
+
+        const shortToken = tokenRes.data.access_token;
+
+        const longTokenRes = await axios.get(`https://graph.facebook.com/v19.0/oauth/access_token`, {
+            params: {
+                grant_type: 'fb_exchange_token',
+                client_id: appId || '',
+                client_secret: appSecret || '',
+                fb_exchange_token: shortToken,
+            },
+        });
+
+        const accessToken = longTokenRes.data.access_token;
+        const expiresIn = longTokenRes.data.expires_in;
+
+        const accountsRes = await axios.get(`https://graph.facebook.com/v19.0/me/adaccounts`, {
+            params: { access_token: accessToken },
+        });
+
+        const account = accountsRes.data.data[0];
+        if (!account) throw new Error('No Meta Ad Account found for this user');
+
+        return this.prisma.adAccountConnection.upsert({
+            where: {
+                clientId_channel_accountId: {
+                    clientId,
+                    channel: AdChannel.META,
+                    accountId: account.id,
+                },
+            },
+            update: {
+                accessTokenEncrypted: encrypt(accessToken, this.encKey),
+                expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
+                status: ConnectionStatus.ACTIVE,
+                lastSyncAt: new Date(),
+            },
+            create: {
+                clientId,
+                channel: AdChannel.META,
+                accountId: account.id,
+                accountName: account.name || 'Meta Ads Account',
+                accessTokenEncrypted: encrypt(accessToken, this.encKey),
+                expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
+                status: ConnectionStatus.ACTIVE,
+            },
+        });
+    }
+
     async getGoogleOAuthUrl(clientId: string) {
-        const clientId2 = process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
-        const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/ads/google/callback';
+        const gClientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+        const redirectUri = this.config.get<string>('GOOGLE_REDIRECT_URI');
         const scope = 'https://www.googleapis.com/auth/adwords';
         const state = Buffer.from(JSON.stringify({ clientId })).toString('base64');
+
         return {
-            url: `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId2}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&state=${state}`,
+            url: `https://accounts.google.com/o/oauth2/v2/auth?client_id=${gClientId}&redirect_uri=${encodeURIComponent(redirectUri || '')}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${state}`,
         };
+    }
+
+    async handleGoogleCallback(code: string, state: string) {
+        if (!state) throw new ForbiddenException('Invalid OAuth state');
+        const { clientId } = JSON.parse(Buffer.from(state, 'base64').toString());
+        const gClientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+        const gClientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET');
+        const redirectUri = this.config.get<string>('GOOGLE_REDIRECT_URI');
+
+        const tokenRes = await axios.post(`https://oauth2.googleapis.com/token`, {
+            code,
+            client_id: gClientId,
+            client_secret: gClientSecret,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+        });
+
+        const { access_token, refresh_token, expires_in } = tokenRes.data;
+        const accountId = 'google-ads-account-id';
+
+        return this.prisma.adAccountConnection.upsert({
+            where: {
+                clientId_channel_accountId: {
+                    clientId,
+                    channel: AdChannel.GOOGLE,
+                    accountId,
+                },
+            },
+            update: {
+                accessTokenEncrypted: encrypt(access_token, this.encKey),
+                refreshTokenEncrypted: refresh_token ? encrypt(refresh_token, this.encKey) : undefined,
+                expiresAt: new Date(Date.now() + expires_in * 1000),
+                status: ConnectionStatus.ACTIVE,
+                lastSyncAt: new Date(),
+            },
+            create: {
+                clientId,
+                channel: AdChannel.GOOGLE,
+                accountId,
+                accountName: 'Google Ads Account',
+                accessTokenEncrypted: encrypt(access_token, this.encKey),
+                refreshTokenEncrypted: refresh_token ? encrypt(refresh_token, this.encKey) : null,
+                expiresAt: new Date(Date.now() + expires_in * 1000),
+                status: ConnectionStatus.ACTIVE,
+            },
+        });
     }
 }

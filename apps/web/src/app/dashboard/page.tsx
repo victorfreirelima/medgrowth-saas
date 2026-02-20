@@ -94,12 +94,12 @@ export default function DashboardPage() {
                             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                             <XAxis
                                 dataKey="date"
-                                tickFormatter={(v) => format(new Date(v + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
+                                tickFormatter={(v: string) => format(new Date(v + 'T00:00:00'), 'dd/MM', { locale: ptBR })}
                                 tick={{ fontSize: 11 }}
                                 tickLine={false}
                             />
                             <YAxis yAxisId="spend" tick={{ fontSize: 11 }} tickLine={false} axisLine={false}
-                                tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                                tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`} />
                             <YAxis yAxisId="leads" orientation="right" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                             <Tooltip
                                 formatter={(value: number, name: string) => {
@@ -108,7 +108,7 @@ export default function DashboardPage() {
                                     if (name === 'adLeads') return [value, 'Leads (Ads)'];
                                     return [value, name];
                                 }}
-                                labelFormatter={(label) => format(new Date(label + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                labelFormatter={(label: string) => format(new Date(label + 'T00:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                             />
                             <Legend />
                             <Area yAxisId="spend" type="monotone" dataKey="spend" stroke="#3b82f6" fill="url(#spendGrad)" strokeWidth={2} dot={false} name="spend" />
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {(campaigns || []).map((c: any, i: number) => (
+                                {(campaigns || []).map((c: { campaignName: string; channel: string; spend: number; clicks: number; ctr: number; cpc: number; leads: number }, i: number) => (
                                     <tr key={i} className="hover:bg-muted/30 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">

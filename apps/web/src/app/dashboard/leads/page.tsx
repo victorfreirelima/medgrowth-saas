@@ -21,27 +21,46 @@ const CHANNEL_LABELS: Record<string, string> = {
     META: '📘 Meta', GOOGLE: '🔍 Google', ORGANIC: '🌱 Orgânico', REFERRAL: '👋 Indicação', OTHER: 'Outro',
 };
 
+interface Lead {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    channel: string;
+    status: string;
+    campaignName?: string;
+    createdAt: string;
+    assignedTo?: { name: string };
+}
+
+interface LeadsResponse {
+    data: Lead[];
+    total: number;
+    page: number;
+    totalPages: number;
+}
+
 export default function LeadsPage() {
     const { data: session } = useSession();
     const qc = useQueryClient();
-    const userRole = (session?.user as any)?.role;
+    const userRole = (session?.user as { role?: string })?.role;
     const [filters, setFilters] = useState<Record<string, string>>({});
     const [showModal, setShowModal] = useState(false);
-    const [selectedLead, setSelectedLead] = useState<any>(null);
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [page, setPage] = useState(1);
 
-    const { data, isLoading } = useQuery({
+    const { data, isLoading } = useQuery<LeadsResponse>({
         queryKey: ['leads', filters, page],
         queryFn: () => leadsApi.getAll({ ...filters, page }),
     });
-    const { data: clients } = useQuery({ queryKey: ['clients'], queryFn: clientsApi.getAll });
+    const { data: clients } = useQuery<{ id: string; name: string }[]>({ queryKey: ['clients'], queryFn: clientsApi.getAll });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) => leadsApi.update(id, data),
+        mutationFn: ({ id, data }: { id: string; data: Partial<Lead> }) => leadsApi.update(id, data),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
     });
     const createMutation = useMutation({
-        mutationFn: ({ clientId, data }: { clientId: string; data: any }) => leadsApi.create(clientId, data),
+        mutationFn: ({ clientId, data }: { clientId: string; data: Partial<Lead> }) => leadsApi.create(clientId, data),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['leads'] }); setShowModal(false); },
     });
 
@@ -72,14 +91,14 @@ export default function LeadsPage() {
             <div className="bg-white rounded-2xl p-4 border border-border shadow-sm flex flex-wrap gap-3">
                 <select
                     className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                    onChange={(e) => setFilters(f => ({ ...f, status: e.target.value || undefined as any }))}
+                    onChange={(e) => setFilters(f => ({ ...f, status: e.target.value || '' }))}
                 >
                     <option value="">Todos os status</option>
                     {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
                 <select
                     className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                    onChange={(e) => setFilters(f => ({ ...f, channel: e.target.value || undefined as any }))}
+                    onChange={(e) => setFilters(f => ({ ...f, channel: e.target.value || '' }))}
                 >
                     <option value="">Todos os canais</option>
                     {Object.entries(CHANNEL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -126,7 +145,7 @@ export default function LeadsPage() {
                                         <p className="text-muted-foreground text-xs mt-1">Ajuste os filtros ou cadastre um novo lead</p>
                                     </td>
                                 </tr>
-                            ) : data?.data?.map((lead: any) => (
+                            ) : data?.data?.map((lead) => (
                                 <tr key={lead.id} className="hover:bg-muted/20 transition-colors">
                                     <td className="px-4 py-3">
                                         <div className="font-medium text-sm text-foreground">{lead.name}</div>
@@ -241,7 +260,7 @@ export default function LeadsPage() {
                                         onChange={(e) => setForm({ ...form, clientId: e.target.value })}
                                     >
                                         <option value="">Selecione o cliente</option>
-                                        {(clients || []).map((c: any) => (
+                                        {(clients || []).map((c) => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                     </select>

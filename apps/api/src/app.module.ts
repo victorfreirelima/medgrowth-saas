@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { BullModule } from '@nestjs/bullmq';
+import * as Sentry from '@sentry/nestjs';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -13,7 +15,20 @@ import { AdsModule } from './ads/ads.module';
 @Module({
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
-        ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+        ThrottlerModule.forRoot([{
+            ttl: 60000,
+            limit: 100,
+        }]),
+        BullModule.forRootAsync({
+            imports: [ConfigModule],
+            useFactory: (config: ConfigService) => ({
+                connection: {
+                    host: config.get('REDIS_HOST', 'localhost'),
+                    port: config.get('REDIS_PORT', 6379),
+                },
+            }),
+            inject: [ConfigService],
+        }),
         PrismaModule,
         AuthModule,
         UsersModule,

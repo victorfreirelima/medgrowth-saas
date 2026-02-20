@@ -22,8 +22,8 @@ export default function LoginPage() {
         setError('');
         try {
             schema.parse({ email, password });
-        } catch (err: any) {
-            setError(err.errors[0]?.message || 'Dados inválidos');
+        } catch (err) {
+            setError('Credenciais inválidas ou erro no servidor');
             return;
         }
         setLoading(true);

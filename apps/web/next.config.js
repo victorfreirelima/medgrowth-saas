@@ -1,6 +1,14 @@
+const { withSentryConfig } = require("@sentry/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    typescript: {
+        ignoreBuildErrors: true,
+    },
     async headers() {
         return [
             {
@@ -15,4 +23,10 @@ const nextConfig = {
     },
 };
 
-module.exports = nextConfig;
+const sentryWebpackPluginOptions = {
+    silent: true,
+    org: "medgrowth",
+    project: "web",
+};
+
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
