@@ -31,9 +31,17 @@ async function bootstrap() {
 
     // CORS
     app.enableCors({
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+        origin: (origin, callback) => {
+            const allowed = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+            if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Client-Id'],
     });
 
     // Global validation pipe
