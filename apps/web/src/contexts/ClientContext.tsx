@@ -43,10 +43,12 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
 
                 if (storedId && (storedId === 'ALL' ? role === 'ADMIN' : clients.some((c: Client) => c.id === storedId))) {
                     setSelectedClientId(storedId);
-                } else if (clients.length > 0) {
-                    setSelectedClientId(clients[0].id);
                 } else if (role === 'ADMIN') {
                     setSelectedClientId('ALL');
+                } else if (clients.length > 0) {
+                    setSelectedClientId(clients[0].id);
+                } else {
+                    setSelectedClientId(null);
                 }
             } catch (error) {
                 console.error('Failed to fetch clients for context', error);

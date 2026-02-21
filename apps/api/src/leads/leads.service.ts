@@ -17,13 +17,13 @@ export class LeadsService {
     async findAll(user: any, filters: LeadFiltersDto) {
         const { clientId, status, channel, assignedToId, dateFrom, dateTo, search, page = 1, limit = 20 } = filters;
 
+        const isAll = clientId === 'ALL' || !clientId;
         const allowedClientIds = user.role === UserRole.ADMIN
-            ? (clientId ? [clientId] : undefined)
-            : user.clientIds;
+            ? (isAll ? undefined : [clientId])
+            : (isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []));
 
         const where: any = {
             ...(allowedClientIds ? { clientId: { in: allowedClientIds } } : {}),
-            ...(clientId && user.role !== UserRole.ADMIN ? { clientId } : {}),
             ...(status ? { status } : {}),
             ...(channel ? { channel } : {}),
             ...(assignedToId ? { assignedToId } : {}),
@@ -138,9 +138,10 @@ export class LeadsService {
     }
 
     async getFunnelMetrics(user: any, clientId?: string) {
+        const isAll = clientId === 'ALL' || !clientId;
         const allowedClientIds = user.role === UserRole.ADMIN
-            ? (clientId ? [clientId] : undefined)
-            : user.clientIds;
+            ? (isAll ? undefined : [clientId])
+            : (isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []));
 
         const where: any = allowedClientIds ? { clientId: { in: allowedClientIds } } : {};
 
