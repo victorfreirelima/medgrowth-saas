@@ -101,7 +101,7 @@ export class IngestService {
                 fbclid: dto.fbclid,
                 deviceType: dto.device,
                 timezone: dto.timezone,
-                status: 'NEW',
+                status: 'NOVO',
             },
         });
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi } from '@/lib/api';
+import { dashboardApi, leadsApi } from '@/lib/api';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend,
 } from 'recharts';
@@ -42,6 +42,10 @@ export default function DashboardPage() {
         queryKey: ['dashboard-campaigns'],
         queryFn: () => dashboardApi.getCampaigns(),
     });
+    const { data: roi, isLoading: loadingROI } = useQuery({
+        queryKey: ['dashboard-roi'],
+        queryFn: () => leadsApi.getROI(''),
+    });
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -52,9 +56,9 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {loadingKPIs ? (
-                    Array.from({ length: 5 }).map((_, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                {(loadingKPIs || loadingROI) ? (
+                    Array.from({ length: 7 }).map((_, i) => (
                         <div key={i} className="kpi-card animate-pulse">
                             <div className="h-4 bg-muted rounded w-2/3 mb-3" />
                             <div className="h-8 bg-muted rounded w-1/2" />
@@ -62,11 +66,13 @@ export default function DashboardPage() {
                     ))
                 ) : (
                     <>
-                        <KPICard title="Investimento" value={formatCurrency(kpis?.spend || 0)} subtitle="Período atual" icon="💰" color="text-green-600" />
+                        <KPICard title="Investimento" value={formatCurrency(kpis?.spend || 0)} subtitle="Período atual" icon="💰" color="text-slate-900" />
                         <KPICard title="Leads (CRM)" value={String(kpis?.leads || 0)} subtitle="Cadastrados" icon="👥" color="text-blue-600" />
                         <KPICard title="CPL" value={formatCurrency(kpis?.cpl || 0)} subtitle="Custo por lead" icon="🎯" color="text-purple-600" />
-                        <KPICard title="Agendamentos" value={String(kpis?.appointments || 0)} subtitle="Confirmados" icon="📅" color="text-orange-500" />
-                        <KPICard title="CPA" value={formatCurrency(kpis?.cpa || 0)} subtitle="Custo por agend." icon="🏆" color="text-rose-600" />
+                        <KPICard title="Agendamentos" value={String(roi?.totalLeads > 0 ? roi.totalLeads : (kpis?.appointments || 0))} subtitle="Confirmados" icon="📅" color="text-orange-500" />
+                        <KPICard title="CPA" value={formatCurrency(roi?.cpa || kpis?.cpa || 0)} subtitle="Custo por agend." icon="🏆" color="text-rose-600" />
+                        <KPICard title="Receita Real" value={formatCurrency(roi?.revenue || 0)} subtitle="Vendas fechadas" icon="💎" color="text-green-600" />
+                        <KPICard title="ROAS" value={(roi?.roas || 0).toFixed(2) + 'x'} subtitle="Retorno sobre ads" icon="📈" color="text-emerald-600" />
                     </>
                 )}
             </div>

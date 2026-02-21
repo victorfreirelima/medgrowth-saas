@@ -6,6 +6,7 @@ import { leadsApi, clientsApi } from '@/lib/api';
 import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import Link from 'next/link';
 
 const STATUS_LABELS: Record<string, string> = {
     NEW: 'Novo', CONTACTED: 'Contatado', QUALIFIED: 'Qualificado',
@@ -72,19 +73,25 @@ export default function LeadsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold">Leads</h1>
-                    <p className="text-muted-foreground text-sm mt-1">
+                    <div className="flex items-center gap-4 mt-1">
+                        <span className="text-sm font-bold text-primary border-b-2 border-primary">Tabela</span>
+                        <Link href="/dashboard/leads/pipeline" className="text-sm text-muted-foreground hover:text-primary transition-colors">Kanban</Link>
+                    </div>
+                </div>
+                <div className="flex gap-3">
+                    <p className="text-muted-foreground text-sm self-center">
                         {data?.total || 0} leads encontrados
                     </p>
+                    {userRole !== 'MANAGER' && (
+                        <button
+                            id="new-lead-btn"
+                            onClick={() => { setSelectedLead(null); setForm({ name: '', phone: '', email: '', channel: 'META', clientId: '', campaignName: '' }); setShowModal(true); }}
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-sm"
+                        >
+                            + Novo Lead
+                        </button>
+                    )}
                 </div>
-                {userRole !== 'MANAGER' && (
-                    <button
-                        id="new-lead-btn"
-                        onClick={() => { setSelectedLead(null); setForm({ name: '', phone: '', email: '', channel: 'META', clientId: '', campaignName: '' }); setShowModal(true); }}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-sm"
-                    >
-                        + Novo Lead
-                    </button>
-                )}
             </div>
 
             {/* Filters */}

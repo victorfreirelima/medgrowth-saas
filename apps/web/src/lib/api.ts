@@ -57,6 +57,8 @@ export const leadsApi = {
         api.post(`/leads/${id}/notes`, { content }).then((r) => r.data),
     getFunnel: (clientId?: string) =>
         api.get('/leads/funnel', { params: { clientId } }).then((r) => r.data),
+    getROI: (clientId: string) =>
+        api.get('/leads/roi', { params: { clientId } }).then((r) => r.data),
 };
 
 export const appointmentsApi = {

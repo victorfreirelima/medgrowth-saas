@@ -24,6 +24,11 @@ export class LeadsController {
         return this.leadsService.getFunnelMetrics(user, clientId);
     }
 
+    @Get('roi')
+    getROIMetrics(@CurrentUser() user: any, @Query('clientId') clientId: string) {
+        return this.leadsService.getROIMetrics(user, clientId);
+    }
+
     @Get(':id')
     findOne(@CurrentUser() user: any, @Param('id') id: string) {
         return this.leadsService.findOne(user, id);

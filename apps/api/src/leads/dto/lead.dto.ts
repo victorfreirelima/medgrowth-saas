@@ -23,6 +23,9 @@ export class CreateLeadDto {
     @ApiPropertyOptional() @IsOptional() @IsString() utmTerm?: string;
     @ApiPropertyOptional() @IsOptional() @IsString() gclid?: string;
     @ApiPropertyOptional() @IsOptional() @IsString() fbclid?: string;
+    @ApiPropertyOptional() @IsOptional() @IsInt() revenue?: number;
+    @ApiPropertyOptional() @IsOptional() @IsString() lostReason?: string;
+    @ApiPropertyOptional() @IsOptional() @IsDateString() appointmentDate?: string;
 }
 
 export class UpdateLeadDto extends PartialType(CreateLeadDto) { }

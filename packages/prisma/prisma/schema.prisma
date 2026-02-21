@@ -19,13 +19,13 @@ enum UserRole {
 }
 
 enum LeadStatus {
-  NEW
-  CONTACTED
-  QUALIFIED
-  SCHEDULED
-  ATTENDED
-  WON
-  LOST
+  NOVO
+  EM_CONTATO
+  QUALIFICADO
+  AGENDADO
+  COMPARECEU
+  FECHADO
+  PERDIDO
 }
 
 enum LeadChannel {
@@ -136,7 +136,12 @@ model Lead {
   campaignName   String?
   adsetId        String?
   adId           String?
-  status         LeadStatus  @default(NEW)
+  status         LeadStatus  @default(NOVO)
+  statusUpdatedAt DateTime   @default(now())
+  firstContactAt DateTime?
+  appointmentDate DateTime?
+  revenue        Float?
+  lostReason     String?
   assignedToId   String?
   observations   String?
   utmSource      String?

@@ -106,7 +106,7 @@ export class LeadCaptureProcessor extends WorkerHost {
                     adId: finalAdId,
                     formName: integration.formName || undefined,
                     rawPayload: { ...rawPayload, ...leadData },
-                    status: 'NEW',
+                    status: 'NOVO',
                 },
             });
 
