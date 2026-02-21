@@ -35,7 +35,7 @@ export class CreateLeadNoteDto {
 }
 
 export class LeadFiltersDto {
-    @ApiPropertyOptional() @IsOptional() @IsUUID() clientId?: string;
+    @ApiPropertyOptional() @IsOptional() @IsString() clientId?: string;
     @ApiPropertyOptional({ enum: LeadStatus }) @IsOptional() @IsEnum(LeadStatus) status?: LeadStatus;
     @ApiPropertyOptional({ enum: LeadChannel }) @IsOptional() @IsEnum(LeadChannel) channel?: LeadChannel;
     @ApiPropertyOptional() @IsOptional() @IsUUID() assignedToId?: string;
