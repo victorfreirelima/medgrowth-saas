@@ -43,5 +43,5 @@ export class LeadFiltersDto {
     @ApiPropertyOptional() @IsOptional() @IsDateString() dateTo?: string;
     @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
     @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number = 1;
-    @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number = 20;
+    @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(1000) limit?: number = 20;
 }
