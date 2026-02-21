@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { leadsApi, dashboardApi, clientsApi } from '@/lib/api';
-import { useSession } from 'next-auth/react';
+import { leadsApi, dashboardApi } from '@/lib/api';
+import { useClient } from '@/contexts/ClientContext';
 
 function formatCurrency(val: number) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(val);
@@ -16,25 +16,22 @@ const FUNNEL_LABELS: Record<string, string> = {
 const FUNNEL_COLORS = ['bg-slate-400', 'bg-blue-400', 'bg-yellow-400', 'bg-purple-400', 'bg-indigo-400', 'bg-green-400', 'bg-red-400'];
 
 export default function ReportsPage() {
-    const { data: session } = useSession();
-    const userRole = (session?.user as any)?.role;
-    const [selectedClient, setSelectedClient] = useState('');
+    const { selectedClientId } = useClient();
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
 
     const params: Record<string, string> = {};
-    if (selectedClient) params.clientId = selectedClient;
+    if (selectedClientId && selectedClientId !== 'ALL') params.clientId = selectedClientId;
     if (dateFrom) params.dateFrom = dateFrom;
     if (dateTo) params.dateTo = dateTo;
 
-    const { data: clients } = useQuery({ queryKey: ['clients'], queryFn: clientsApi.getAll });
     const { data: kpis } = useQuery({
-        queryKey: ['kpis', params],
+        queryKey: ['kpis', params, selectedClientId],
         queryFn: () => dashboardApi.getKPIs(params),
     });
     const { data: funnel } = useQuery({
-        queryKey: ['funnel', selectedClient],
-        queryFn: () => leadsApi.getFunnel(selectedClient || undefined),
+        queryKey: ['funnel', selectedClientId],
+        queryFn: () => leadsApi.getFunnel(selectedClientId && selectedClientId !== 'ALL' ? selectedClientId : undefined),
     });
 
     const totalFunnelLeads = (funnel || []).reduce((s: number, f: any) => s + f.count, 0);
@@ -48,16 +45,6 @@ export default function ReportsPage() {
 
             {/* Filters */}
             <div className="bg-white rounded-2xl p-4 border border-border shadow-sm flex flex-wrap gap-3 items-end">
-                {userRole === 'ADMIN' && (
-                    <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Cliente</label>
-                        <select className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                            value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
-                            <option value="">Todos os clientes</option>
-                            {(clients || []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                    </div>
-                )}
                 <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">De</label>
                     <input type="date" className="px-3 py-2 rounded-lg border border-border text-sm"

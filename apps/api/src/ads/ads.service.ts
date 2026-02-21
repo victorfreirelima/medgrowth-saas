@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nest
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { JwtService } from '@nestjs/jwt';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdChannel, ConnectionStatus, UserRole } from '@prisma/client';
@@ -14,6 +15,7 @@ export class AdsService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly config: ConfigService,
+        private readonly jwtService: JwtService,
         @InjectQueue('ads-sync') private adsSyncQueue: Queue,
     ) {
         this.encKey = this.config.get<string>('ENCRYPTION_KEY') || '12345678901234567890123456789012';
@@ -26,9 +28,14 @@ export class AdsService {
     }
 
     async getConnections(user: any, clientId?: string) {
-        const clientIds = user.role === UserRole.ADMIN
-            ? (clientId ? [clientId] : undefined)
-            : user.clientIds;
+        const isAll = clientId === 'ALL' || !clientId;
+        let clientIds: string[] | undefined;
+
+        if (user.role === UserRole.ADMIN) {
+            clientIds = isAll ? undefined : [clientId];
+        } else {
+            clientIds = isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []);
+        }
 
         const connections = await this.prisma.adAccountConnection.findMany({
             where: clientIds ? { clientId: { in: clientIds } } : {},
@@ -96,7 +103,10 @@ export class AdsService {
         const appId = this.config.get<string>('META_APP_ID');
         const redirectUri = this.config.get<string>('META_REDIRECT_URI');
         const version = this.config.get<string>('META_API_VERSION') || 'v19.0';
-        const state = Buffer.from(JSON.stringify({ clientId })).toString('base64');
+
+        const statePayload = { clientId, nonce: Date.now().toString() };
+        const secret = this.config.get<string>('JWT_SECRET');
+        const state = this.jwtService.sign(statePayload, { secret, expiresIn: '15m' });
 
         return {
             url: `https://www.facebook.com/${version}/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri || '')}&scope=ads_read,ads_management,business_management&state=${state}`,
@@ -105,7 +115,14 @@ export class AdsService {
 
     async handleMetaCallback(code: string, state: string) {
         if (!state) throw new ForbiddenException('Invalid OAuth state');
-        const { clientId } = JSON.parse(Buffer.from(state, 'base64').toString());
+        let clientId: string;
+        try {
+            const secret = this.config.get<string>('JWT_SECRET');
+            const payload = this.jwtService.verify(state, { secret });
+            clientId = payload.clientId;
+        } catch (e) {
+            throw new ForbiddenException('Invalid or expired OAuth state');
+        }
         const appId = this.config.get<string>('META_APP_ID');
         const appSecret = this.config.get<string>('META_APP_SECRET');
         const redirectUri = this.config.get<string>('META_REDIRECT_URI');
@@ -170,7 +187,10 @@ export class AdsService {
         const gClientId = this.config.get<string>('GOOGLE_CLIENT_ID');
         const redirectUri = this.config.get<string>('GOOGLE_REDIRECT_URI');
         const scope = 'https://www.googleapis.com/auth/adwords';
-        const state = Buffer.from(JSON.stringify({ clientId })).toString('base64');
+
+        const statePayload = { clientId, nonce: Date.now().toString() };
+        const secret = this.config.get<string>('JWT_SECRET');
+        const state = this.jwtService.sign(statePayload, { secret, expiresIn: '15m' });
 
         return {
             url: `https://accounts.google.com/o/oauth2/v2/auth?client_id=${gClientId}&redirect_uri=${encodeURIComponent(redirectUri || '')}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${state}`,
@@ -179,7 +199,14 @@ export class AdsService {
 
     async handleGoogleCallback(code: string, state: string) {
         if (!state) throw new ForbiddenException('Invalid OAuth state');
-        const { clientId } = JSON.parse(Buffer.from(state, 'base64').toString());
+        let clientId: string;
+        try {
+            const secret = this.config.get<string>('JWT_SECRET');
+            const payload = this.jwtService.verify(state, { secret });
+            clientId = payload.clientId;
+        } catch (e) {
+            throw new ForbiddenException('Invalid or expired OAuth state');
+        }
         const gClientId = this.config.get<string>('GOOGLE_CLIENT_ID');
         const gClientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET');
         const redirectUri = this.config.get<string>('GOOGLE_REDIRECT_URI');

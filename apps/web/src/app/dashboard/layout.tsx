@@ -4,6 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ClientSwitcher } from '@/components/layout/ClientSwitcher';
 
 const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -127,8 +128,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             {filteredNav.find((n) => pathname === n.href || (n.href !== '/dashboard' && pathname.startsWith(n.href)))?.label || 'Dashboard'}
                         </h1>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4">
+                        <ClientSwitcher />
+                        <div className="text-xs text-muted-foreground hidden md:block">
                             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                         </div>
                     </div>

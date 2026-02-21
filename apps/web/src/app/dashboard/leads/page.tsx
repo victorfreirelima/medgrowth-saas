@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { leadsApi, clientsApi } from '@/lib/api';
+import { leadsApi } from '@/lib/api';
 import { useSession } from 'next-auth/react';
+import { useClient } from '@/contexts/ClientContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
@@ -44,6 +45,7 @@ interface LeadsResponse {
 export default function LeadsPage() {
     const { data: session } = useSession();
     const qc = useQueryClient();
+    const { selectedClientId, availableClients } = useClient();
     const userRole = (session?.user as { role?: string })?.role;
     const [filters, setFilters] = useState<Record<string, string>>({});
     const [showModal, setShowModal] = useState(false);
@@ -51,10 +53,9 @@ export default function LeadsPage() {
     const [page, setPage] = useState(1);
 
     const { data, isLoading } = useQuery<LeadsResponse>({
-        queryKey: ['leads', filters, page],
+        queryKey: ['leads', filters, page, selectedClientId],
         queryFn: () => leadsApi.getAll({ ...filters, page }),
     });
-    const { data: clients } = useQuery<{ id: string; name: string }[]>({ queryKey: ['clients'], queryFn: clientsApi.getAll });
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<Lead> }) => leadsApi.update(id, data),
@@ -94,7 +95,7 @@ export default function LeadsPage() {
                     {userRole !== 'MANAGER' && (
                         <button
                             id="new-lead-btn"
-                            onClick={() => { setSelectedLead(null); setForm({ name: '', phone: '', email: '', channel: 'META', clientId: '', campaignName: '' }); setShowModal(true); }}
+                            onClick={() => { setSelectedLead(null); setForm({ name: '', phone: '', email: '', channel: 'META', clientId: selectedClientId !== 'ALL' ? (selectedClientId || '') : '', campaignName: '' }); setShowModal(true); }}
                             className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-sm"
                         >
                             + Novo Lead
@@ -276,7 +277,7 @@ export default function LeadsPage() {
                                         onChange={(e) => setForm({ ...form, clientId: e.target.value })}
                                     >
                                         <option value="">Selecione o cliente</option>
-                                        {(clients || []).map((c) => (
+                                        {availableClients.map((c) => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                     </select>

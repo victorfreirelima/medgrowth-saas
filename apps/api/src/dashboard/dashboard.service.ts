@@ -7,12 +7,17 @@ export class DashboardService {
     constructor(private readonly prisma: PrismaService) { }
 
     private getClientFilter(user: any, clientId?: string) {
+        const isAll = clientId === 'ALL' || !clientId;
+
         if (user.role === UserRole.ADMIN) {
-            return clientId ? [clientId] : undefined;
+            return isAll ? undefined : [clientId];
         }
-        return clientId && user.clientIds.includes(clientId)
-            ? [clientId]
-            : user.clientIds;
+
+        if (isAll) {
+            return user.clientIds;
+        }
+
+        return user.clientIds.includes(clientId) ? [clientId] : [];
     }
 
     async getKPIs(user: any, clientId?: string, dateFrom?: string, dateTo?: string) {

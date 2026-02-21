@@ -9,6 +9,7 @@ import {
     Code, X, ExternalLink,
 } from 'lucide-react';
 import api from '@/lib/api';
+import { useClient } from '@/contexts/ClientContext';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -54,21 +55,17 @@ export default function IntegrationsPage() {
     const { data: session } = useSession();
     const toast = useToast();
     const qc = useQueryClient();
-    const [selectedClientId, setSelectedClientId] = useState<string>('');
+    const { selectedClientId, availableClients } = useClient();
     const [activeSnippetTab, setActiveSnippetTab] = useState<'js' | 'zapier' | 'make' | 'wordpress'>('js');
 
     // API URL for display
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-8d75.up.railway.app';
+    const isSpecificClient = selectedClientId && selectedClientId !== 'ALL';
 
     // ── Data fetching ──
-    const { data: clients = [] } = useQuery<Client[]>({
-        queryKey: ['clients'],
-        queryFn: () => api.get('/clients').then(r => r.data),
-    });
-
     const { data: integrations = [], isLoading: loadingIntegrations } = useQuery<Integration[]>({
         queryKey: ['integrations', selectedClientId],
-        queryFn: () => api.get('/integrations', { params: selectedClientId ? { clientId: selectedClientId } : {} }).then(r => r.data),
+        queryFn: () => api.get('/integrations', { params: isSpecificClient ? { clientId: selectedClientId } : {} }).then(r => r.data),
         enabled: true,
     });
 
@@ -80,8 +77,8 @@ export default function IntegrationsPage() {
     });
 
     // ── Current integration for selected client ──
-    const currentIntegration = integrations.find(i => i.clientId === selectedClientId);
-    const selectedClient = clients.find(c => c.id === selectedClientId);
+    const currentIntegration = isSpecificClient ? integrations.find(i => i.clientId === selectedClientId) : undefined;
+    const selectedClient = isSpecificClient ? availableClients.find(c => c.id === selectedClientId) : undefined;
     const ingestUrl = selectedClient ? `${apiUrl}/ingest/leads/${selectedClient.slug}` : '';
     const apiKey = currentIntegration?.apiKey || '';
 
@@ -208,22 +205,16 @@ add_action('wpcf7_before_send_mail', function($cf7) {
                 </div>
             </div>
 
-            {/* Client Selector */}
-            <div className="bg-white rounded-2xl border border-border p-5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-2">Selecionar Cliente</label>
-                <select
-                    className="w-full max-w-sm px-4 py-2.5 rounded-xl border border-border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    value={selectedClientId}
-                    onChange={e => { setSelectedClientId(e.target.value); setSelectedPageId(''); }}
-                >
-                    <option value="">-- Escolha um cliente --</option>
-                    {clients.map((c: Client) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                </select>
-            </div>
-
-            {selectedClientId && (
+            {/* Headers */}
+            {selectedClientId === 'ALL' || !selectedClientId ? (
+                <div className="bg-amber-50 rounded-2xl p-8 border border-amber-200 text-center text-amber-800">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-amber-500" />
+                    <h3 className="text-lg font-bold">Atenção Especial Admin</h3>
+                    <p className="mt-2 text-sm text-amber-700/80 max-w-md mx-auto">
+                        Para configurar o webhook do META Lead Ads ou a URL da API de leads (Make/Zapier), por favor selecione um cliente específico no cabeçalho acima.
+                    </p>
+                </div>
+            ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
                     {/* ── META Lead Ads Block ─────────────────────────────────── */}

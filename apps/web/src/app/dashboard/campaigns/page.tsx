@@ -2,23 +2,20 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, clientsApi } from '@/lib/api';
-import { useSession } from 'next-auth/react';
+import { dashboardApi } from '@/lib/api';
+import { useClient } from '@/contexts/ClientContext';
 
 function formatCurrency(val: number) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(val);
 }
 
 export default function CampaignsPage() {
-    const { data: session } = useSession();
-    const userRole = (session?.user as any)?.role;
-    const [selectedClient, setSelectedClient] = useState('');
+    const { selectedClientId } = useClient();
     const [selectedChannel, setSelectedChannel] = useState('');
 
-    const { data: clients } = useQuery({ queryKey: ['clients'], queryFn: clientsApi.getAll });
     const { data: campaigns, isLoading } = useQuery({
-        queryKey: ['campaigns', selectedClient],
-        queryFn: () => dashboardApi.getCampaigns(selectedClient ? { clientId: selectedClient } : undefined),
+        queryKey: ['campaigns', selectedClientId],
+        queryFn: () => dashboardApi.getCampaigns(selectedClientId && selectedClientId !== 'ALL' ? { clientId: selectedClientId } : undefined),
     });
 
     const filtered = (campaigns || []).filter((c: any) =>
@@ -58,13 +55,6 @@ export default function CampaignsPage() {
 
             {/* Filters */}
             <div className="bg-white rounded-2xl p-4 border border-border shadow-sm flex flex-wrap gap-3">
-                {userRole === 'ADMIN' && (
-                    <select className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                        value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
-                        <option value="">Todos os clientes</option>
-                        {(clients || []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                )}
                 <select className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
                     value={selectedChannel} onChange={(e) => setSelectedChannel(e.target.value)}>
                     <option value="">Todos os canais</option>

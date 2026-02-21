@@ -29,22 +29,26 @@ function formatCurrency(val: number) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(val);
 }
 
+import { useClient } from '@/contexts/ClientContext';
+
 export default function DashboardPage() {
+    const { selectedClientId } = useClient();
+
     const { data: kpis, isLoading: loadingKPIs } = useQuery({
-        queryKey: ['dashboard-kpis'],
+        queryKey: ['dashboard-kpis', selectedClientId],
         queryFn: () => dashboardApi.getKPIs(),
     });
     const { data: timeSeries, isLoading: loadingTS } = useQuery({
-        queryKey: ['dashboard-timeseries'],
+        queryKey: ['dashboard-timeseries', selectedClientId],
         queryFn: () => dashboardApi.getTimeSeries({ days: '30' }),
     });
     const { data: campaigns, isLoading: loadingCampaigns } = useQuery({
-        queryKey: ['dashboard-campaigns'],
+        queryKey: ['dashboard-campaigns', selectedClientId],
         queryFn: () => dashboardApi.getCampaigns(),
     });
     const { data: roi, isLoading: loadingROI } = useQuery({
-        queryKey: ['dashboard-roi'],
-        queryFn: () => leadsApi.getROI(''),
+        queryKey: ['dashboard-roi', selectedClientId],
+        queryFn: () => leadsApi.getROI(''), // Axios interceptor will inject the correct clientId
     });
 
     return (

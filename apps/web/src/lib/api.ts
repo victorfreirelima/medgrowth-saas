@@ -14,6 +14,12 @@ api.interceptors.request.use(async (config) => {
             const token = (session.user as { accessToken?: string }).accessToken;
             if (token) config.headers.Authorization = `Bearer ${token}`;
         }
+
+        const clientId = localStorage.getItem('medgrowth.selectedClientId');
+        if (clientId) {
+            config.headers['X-Client-Id'] = clientId;
+            config.params = { ...config.params, clientId }; // Attach as query param for existing code compat
+        }
     }
     return config;
 });
