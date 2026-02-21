@@ -36,6 +36,13 @@ enum LeadChannel {
   OTHER
 }
 
+enum LeadSource {
+  META_LEAD_ADS
+  WEBSITE
+  WHATSAPP
+  MANUAL
+}
+
 enum AppointmentStatus {
   CONFIRMED
   CANCELLED
@@ -58,6 +65,10 @@ enum ConnectionStatus {
 enum ClientStatus {
   ACTIVE
   ARCHIVED
+}
+
+enum IntegrationProvider {
+  META
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -89,14 +100,15 @@ model Client {
   specialty String?
   city      String?
   notes     String?
-  isActive  Boolean      @default(true) // Keep for compatibility if needed, but status is primary now
+  isActive  Boolean      @default(true)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  users       UserClient[]
-  leads       Lead[]
-  connections AdAccountConnection[]
-  auditLogs   AuditLog[]
+  users        UserClient[]
+  leads        Lead[]
+  connections  AdAccountConnection[]
+  auditLogs    AuditLog[]
+  integrations ClientIntegration[]
 
   @@map("clients")
 }
@@ -112,27 +124,39 @@ model UserClient {
 }
 
 model Lead {
-  id           String      @id @default(uuid())
-  clientId     String
-  name         String
-  phone        String?
-  email        String?
-  origin       String?
-  channel      LeadChannel @default(OTHER)
-  campaignId   String?
-  campaignName String?
-  status       LeadStatus  @default(NEW)
-  assignedToId String?
-  observations String?
-  utmSource    String?
-  utmMedium    String?
-  utmCampaign  String?
-  utmContent   String?
-  utmTerm      String?
-  gclid        String?
-  fbclid       String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id             String      @id @default(uuid())
+  clientId       String
+  name           String
+  phone          String?
+  email          String?
+  origin         String?
+  channel        LeadChannel @default(OTHER)
+  source         LeadSource?
+  campaignId     String?
+  campaignName   String?
+  adsetId        String?
+  adId           String?
+  status         LeadStatus  @default(NEW)
+  assignedToId   String?
+  observations   String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  utmContent     String?
+  utmTerm        String?
+  gclid          String?
+  fbclid         String?
+  wbraid         String?
+  gbraid         String?
+  providerLeadId String?     @unique
+  rawPayload     Json?
+  formName       String?
+  pageUrl        String?
+  message        String?
+  deviceType     String?
+  timezone       String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   client       Client        @relation(fields: [clientId], references: [id])
   assignedTo   User?         @relation("AssignedLeads", fields: [assignedToId], references: [id])
@@ -142,6 +166,7 @@ model Lead {
   @@index([clientId])
   @@index([status])
   @@index([channel])
+  @@index([source])
   @@index([createdAt])
   @@map("leads")
 }
@@ -176,20 +201,42 @@ model Appointment {
   @@map("appointments")
 }
 
+model ClientIntegration {
+  id            String              @id @default(uuid())
+  clientId      String
+  provider      IntegrationProvider
+  enabled       Boolean             @default(false)
+  pageId        String?
+  formId        String?
+  pageName      String?
+  formName      String?
+  webhookActive Boolean             @default(false)
+  lastLeadAt    DateTime?
+  apiKey        String              @unique @default(uuid())
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, provider])
+  @@index([clientId])
+  @@map("client_integrations")
+}
+
 model AdAccountConnection {
-  id                   String           @id @default(uuid())
-  clientId             String
-  channel              AdChannel
-  accountId            String
-  accountName          String?
-  accessTokenEncrypted String
+  id                    String           @id @default(uuid())
+  clientId              String
+  channel               AdChannel
+  accountId             String
+  accountName           String?
+  accessTokenEncrypted  String
   refreshTokenEncrypted String?
-  expiresAt            DateTime?
-  status               ConnectionStatus @default(ACTIVE)
-  lastSyncAt           DateTime?
-  errorMessage         String?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  expiresAt             DateTime?
+  status                ConnectionStatus @default(ACTIVE)
+  lastSyncAt            DateTime?
+  errorMessage          String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   client    Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
   snapshots CampaignSnapshotDaily[]
@@ -199,26 +246,26 @@ model AdAccountConnection {
 }
 
 model CampaignSnapshotDaily {
-  id             String    @id @default(uuid())
-  connectionId   String
-  date           DateTime  @db.Date
-  campaignId     String
-  campaignName   String
-  adsetId        String?
-  adsetName      String?
-  channel        AdChannel
-  spend          Float     @default(0)
-  impressions    Int       @default(0)
-  clicks         Int       @default(0)
-  ctr            Float     @default(0)
-  cpc            Float     @default(0)
-  cpm            Float     @default(0)
-  leads          Int       @default(0)
-  conversions    Int       @default(0)
-  reach          Int       @default(0)
-  frequency      Float     @default(0)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  connectionId String
+  date         DateTime  @db.Date
+  campaignId   String
+  campaignName String
+  adsetId      String?
+  adsetName    String?
+  channel      AdChannel
+  spend        Float     @default(0)
+  impressions  Int       @default(0)
+  clicks       Int       @default(0)
+  ctr          Float     @default(0)
+  cpc          Float     @default(0)
+  cpm          Float     @default(0)
+  leads        Int       @default(0)
+  conversions  Int       @default(0)
+  reach        Int       @default(0)
+  frequency    Float     @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   connection AdAccountConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 

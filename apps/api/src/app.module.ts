@@ -11,6 +11,9 @@ import { LeadsModule } from './leads/leads.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AdsModule } from './ads/ads.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { IngestModule } from './ingest/ingest.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -56,6 +59,9 @@ import { AppController } from './app.controller';
         AppointmentsModule,
         DashboardModule,
         AdsModule,
+        WebhooksModule,
+        IngestModule,
+        IntegrationsModule,
     ],
     controllers: [AppController]
 })
