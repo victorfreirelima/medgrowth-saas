@@ -8,20 +8,76 @@ import { ptBR } from 'date-fns/locale';
 import {
     Search,
     Plus,
-    MoreHorizontal,
     Edit,
     Archive,
     Building2,
     MapPin,
     Stethoscope,
-    FileText
+    X,
+    CheckCircle,
+    AlertCircle,
+    Loader2,
 } from 'lucide-react';
 
-// Common UI components (assuming they exist or using standard HTML/Tailwind for speed/consistency)
-// I will use standard Tailwind + some shadcn-like classes to ensure it matches the "MedGrowth" premium aesthetic.
+// ─── Simple Toast System ─────────────────────────────────────────────────────
+
+type Toast = { id: string; type: 'success' | 'error'; message: string };
+
+function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
+    return (
+        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none">
+            {toasts.map((t) => (
+                <div
+                    key={t.id}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-sm font-semibold pointer-events-auto border ${t.type === 'success'
+                        ? 'bg-green-50 text-green-800 border-green-200'
+                        : 'bg-red-50 text-red-800 border-red-200'
+                        } animate-in slide-in-from-bottom-2 duration-200`}
+                >
+                    {t.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    <span>{t.message}</span>
+                    <button onClick={() => onRemove(t.id)} className="ml-2 opacity-60 hover:opacity-100">
+                        <X className="w-3 h-3" />
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function useToast() {
+    const [toasts, setToasts] = useState<Toast[]>([]);
+    const show = (type: 'success' | 'error', message: string) => {
+        const id = Math.random().toString(36).slice(2);
+        setToasts((prev) => [...prev, { id, type, message }]);
+        setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 5000);
+    };
+    const remove = (id: string) => setToasts((prev) => prev.filter((t) => t.id !== id));
+    return { toasts, success: (m: string) => show('success', m), error: (m: string) => show('error', m), remove };
+}
+
+// ─── Error parser ─────────────────────────────────────────────────────────────
+
+function parseApiError(err: any): string {
+    const status = err?.response?.status;
+    const data = err?.response?.data;
+
+    if (status === 401) return 'Sessão expirada. Faça login novamente.';
+    if (status === 403) return 'Sem permissão. Apenas ADMINs podem criar clientes.';
+    if (status === 409) return 'Slug já existe. Escolha um nome diferente.';
+
+    if (data?.message) {
+        if (Array.isArray(data.message)) return data.message.join(', ');
+        return String(data.message);
+    }
+    return err?.message || 'Erro desconhecido. Veja o console.';
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ClientsPage() {
     const queryClient = useQueryClient();
+    const toast = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<any>(null);
@@ -32,18 +88,36 @@ export default function ClientsPage() {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data: any) => clientsApi.create(data),
-        onSuccess: () => {
+        mutationFn: (data: any) => {
+            console.log('[ClientsAPI] POST /clients — payload:', data);
+            return clientsApi.create(data);
+        },
+        onSuccess: (data) => {
+            console.log('[ClientsAPI] POST /clients — response 201:', data);
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setIsCreateModalOpen(false);
+            toast.success(`Cliente "${data.name}" criado com sucesso!`);
+        },
+        onError: (err: any) => {
+            console.error('[ClientsAPI] POST /clients — error:', err?.response?.status, err?.response?.data ?? err?.message);
+            toast.error(parseApiError(err));
         },
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) => clientsApi.update(id, data),
-        onSuccess: () => {
+        mutationFn: ({ id, data }: { id: string; data: any }) => {
+            console.log('[ClientsAPI] PATCH /clients/' + id + ' — payload:', data);
+            return clientsApi.update(id, data);
+        },
+        onSuccess: (data) => {
+            console.log('[ClientsAPI] PATCH /clients — response:', data);
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setEditingClient(null);
+            toast.success('Cliente atualizado com sucesso!');
+        },
+        onError: (err: any) => {
+            console.error('[ClientsAPI] PATCH — error:', err?.response?.status, err?.response?.data ?? err?.message);
+            toast.error(parseApiError(err));
         },
     });
 
@@ -51,6 +125,11 @@ export default function ClientsPage() {
         mutationFn: (id: string) => clientsApi.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            toast.success('Cliente arquivado.');
+        },
+        onError: (err: any) => {
+            console.error('[ClientsAPI] DELETE — error:', err?.response?.status, err?.response?.data ?? err?.message);
+            toast.error(parseApiError(err));
         },
     });
 
@@ -61,6 +140,8 @@ export default function ClientsPage() {
 
     return (
         <div className="space-y-6">
+            <ToastContainer toasts={toast.toasts} onRemove={toast.remove} />
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Clientes</h2>
@@ -176,6 +257,7 @@ export default function ClientsPage() {
                                                 <button
                                                     onClick={() => setEditingClient(client)}
                                                     className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
+                                                    title="Editar"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
@@ -185,7 +267,9 @@ export default function ClientsPage() {
                                                             archiveMutation.mutate(client.id);
                                                         }
                                                     }}
-                                                    className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-colors"
+                                                    disabled={archiveMutation.isPending}
+                                                    className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                                                    title="Arquivar"
                                                 >
                                                     <Archive className="w-4 h-4" />
                                                 </button>
@@ -208,6 +292,7 @@ export default function ClientsPage() {
                         setEditingClient(null);
                     }}
                     onSubmit={(data: any) => {
+                        console.log('[ClientModal] onSubmit called with:', data);
                         if (editingClient) {
                             updateMutation.mutate({ id: editingClient.id, data });
                         } else {
@@ -215,13 +300,22 @@ export default function ClientsPage() {
                         }
                     }}
                     isSubmitting={createMutation.isPending || updateMutation.isPending}
+                    error={createMutation.isError ? parseApiError((createMutation as any).error) : updateMutation.isError ? parseApiError((updateMutation as any).error) : null}
                 />
             )}
         </div>
     );
 }
 
-function ClientModal({ client, onClose, onSubmit, isSubmitting }: any) {
+// ─── Modal ────────────────────────────────────────────────────────────────────
+
+function ClientModal({ client, onClose, onSubmit, isSubmitting, error }: {
+    client: any;
+    onClose: () => void;
+    onSubmit: (data: any) => void;
+    isSubmitting: boolean;
+    error: string | null;
+}) {
     const [formData, setFormData] = useState({
         name: client?.name || '',
         slug: client?.slug || '',
@@ -230,29 +324,58 @@ function ClientModal({ client, onClose, onSubmit, isSubmitting }: any) {
         notes: client?.notes || '',
     });
 
-    // Auto-generate slug from name
     const handleNameChange = (name: string) => {
+        if (client) {
+            // Don't auto-change slug when editing
+            setFormData({ ...formData, name });
+            return;
+        }
         const slug = name.toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, "") // remove accents
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^\w\s-]/g, '')
             .replace(/[\s_-]+/g, '-')
             .replace(/^-+|-+$/g, '');
         setFormData({ ...formData, name, slug });
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log('[ClientModal] Form submit event fired. formData:', formData);
+        if (!formData.name.trim()) {
+            console.warn('[ClientModal] Name is empty, blocking submit.');
+            return;
+        }
+        if (!formData.slug.trim()) {
+            console.warn('[ClientModal] Slug is empty, blocking submit.');
+            return;
+        }
+        onSubmit(formData);
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-[32px] border border-border shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 duration-200">
+            <div className="bg-white rounded-[32px] border border-border shadow-2xl w-full max-w-lg overflow-hidden">
                 <div className="p-8 space-y-6">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold">{client ? 'Editar Cliente' : 'Novo Cliente'}</h3>
-                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">✕</button>
+                        <button onClick={onClose} disabled={isSubmitting} className="text-slate-400 hover:text-slate-600 transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
 
-                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }}>
+                    {error && (
+                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm font-medium rounded-xl px-4 py-3">
+                            <AlertCircle className="w-4 h-4 shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                    )}
+
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="col-span-2 space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pl-1">Nome do Cliente</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pl-1">
+                                    Nome do Cliente <span className="text-red-500">*</span>
+                                </label>
                                 <input
                                     required
                                     type="text"
@@ -263,13 +386,16 @@ function ClientModal({ client, onClose, onSubmit, isSubmitting }: any) {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pl-1">Slug (Identificador)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pl-1">
+                                    Slug <span className="text-red-500">*</span>
+                                </label>
                                 <input
                                     required
                                     type="text"
-                                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-slate-100 text-sm focus:outline-none"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-slate-100 text-sm focus:outline-none text-muted-foreground"
                                     value={formData.slug}
                                     readOnly
+                                    title="Gerado automaticamente a partir do nome"
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -295,10 +421,10 @@ function ClientModal({ client, onClose, onSubmit, isSubmitting }: any) {
                             <div className="col-span-2 space-y-1.5">
                                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pl-1">Observações</label>
                                 <textarea
-                                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[100px]"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[80px] resize-none"
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    placeholder="Detalhes internos sobre o contrato ou cliente..."
+                                    placeholder="Detalhes internos sobre o contrato..."
                                 />
                             </div>
                         </div>
@@ -307,15 +433,17 @@ function ClientModal({ client, onClose, onSubmit, isSubmitting }: any) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-5 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-slate-50 transition-colors"
+                                disabled={isSubmitting}
+                                className="px-5 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                disabled={isSubmitting || !formData.name.trim()}
+                                className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50 inline-flex items-center gap-2"
                             >
+                                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                                 {isSubmitting ? 'Salvando...' : (client ? 'Salvar Edições' : 'Criar Cliente')}
                             </button>
                         </div>

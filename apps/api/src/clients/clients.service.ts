@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole, ClientStatus } from '@prisma/client';
 
@@ -42,6 +42,8 @@ export class ClientsService {
     }
 
     async create(dto: { name: string; slug: string; specialty?: string; city?: string; notes?: string; logoUrl?: string }) {
+        const existing = await this.prisma.client.findUnique({ where: { slug: dto.slug } });
+        if (existing) throw new ConflictException(`Slug "${dto.slug}" já está em uso. Escolha um nome diferente.`);
         return this.prisma.client.create({ data: dto });
     }
 
