@@ -26,7 +26,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-    Plus, MoreHorizontal, Phone, Mail, Calendar,
+    Plus, MoreHorizontal, Phone, Calendar,
     DollarSign, AlertCircle, CheckCircle2, User as UserIcon
 } from 'lucide-react';
 import Link from 'next/link';
@@ -56,6 +56,10 @@ const STATUS_COLORS: Record<string, string> = {
     PERDIDO: 'border-t-red-400 bg-red-50/30',
 };
 
+const CHANNEL_LABELS: Record<string, string> = {
+    META: '📘 Meta', GOOGLE: '🔍 Google', ORGANIC: '🌱 Orgânico', REFERRAL: '👋 Indicação', OTHER: 'Outro',
+};
+
 interface Lead {
     id: string;
     name: string;
@@ -71,6 +75,7 @@ interface Lead {
 
 export default function PipelinePage() {
     const { data: session } = useSession();
+    const userRole = (session?.user as { role?: string })?.role;
     const qc = useQueryClient();
     const [activeId, setActiveId] = useState<string | null>(null);
     const [selectedClientId, setSelectedClientId] = useState<string>('');
@@ -79,14 +84,17 @@ export default function PipelinePage() {
     const [revenue, setRevenue] = useState<string>('');
     const [lostReason, setLostReason] = useState<string>('');
 
+    const [showModal, setShowModal] = useState(false);
+    const [form, setForm] = useState({ name: '', phone: '', email: '', channel: 'META', clientId: '', campaignName: '' });
+
     const { data: clients } = useQuery<{ id: string; name: string }[]>({
         queryKey: ['clients'],
         queryFn: clientsApi.getAll
     });
 
-    const { data: leadsResponse, isLoading } = useQuery({
+    const { data: leadsResponse } = useQuery({
         queryKey: ['leads-pipeline', selectedClientId],
-        queryFn: () => leadsApi.getAll({ clientId: selectedClientId, limit: 1000 }),
+        queryFn: () => leadsApi.getAll(selectedClientId ? { clientId: selectedClientId, limit: 1000 } : { limit: 1000 }),
         enabled: !!session,
     });
 
@@ -99,6 +107,15 @@ export default function PipelinePage() {
             setPendingUpdate(null);
             setRevenue('');
             setLostReason('');
+        },
+    });
+
+    const createMutation = useMutation({
+        mutationFn: ({ clientId, data }: { clientId: string; data: Partial<Lead> }) => leadsApi.create(clientId, data),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['leads-pipeline'] });
+            setShowModal(false);
+            setForm({ name: '', phone: '', email: '', channel: 'META', clientId: '', campaignName: '' });
         },
     });
 
@@ -122,10 +139,10 @@ export default function PipelinePage() {
         const overId = over.id as string;
 
         let targetStatus = overId;
-        const overLead = leads.find(l => l.id === overId);
+        const overLead = leads.find((l: Lead) => l.id === overId);
         if (overLead) targetStatus = overLead.status;
 
-        const lead = leads.find(l => l.id === leadId);
+        const lead = leads.find((l: Lead) => l.id === leadId);
         if (!lead || lead.status === targetStatus || !PIPELINE_STATUSES.includes(targetStatus)) {
             setActiveId(null);
             return;
@@ -169,9 +186,14 @@ export default function PipelinePage() {
                         <option value="">Todos os Clientes</option>
                         {clients?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-sm">
-                        <Plus className="w-4 h-4" /> Novo Lead
-                    </button>
+                    {userRole !== 'MANAGER' && (
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" /> Novo Lead
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -199,7 +221,7 @@ export default function PipelinePage() {
                         }),
                     }}>
                         {activeId ? (
-                            <Card lead={leads.find(l => l.id === activeId)!} isOverlay />
+                            <Card lead={leads.find((l: Lead) => l.id === activeId)!} isOverlay />
                         ) : null}
                     </DragOverlay>
                 </DndContext>
@@ -258,6 +280,76 @@ export default function PipelinePage() {
                             <button
                                 onClick={() => setPendingUpdate(null)}
                                 className="flex-1 py-2 rounded-xl border border-border text-sm font-medium hover:bg-slate-50"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Novo Lead */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+                        <h2 className="text-lg font-bold mb-4">Novo Lead</h2>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-sm font-medium text-foreground mb-1 block">Nome *</label>
+                                <input
+                                    className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none"
+                                    value={form.name}
+                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-sm font-medium text-foreground mb-1 block">Telefone</label>
+                                    <input
+                                        className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none"
+                                        value={form.phone}
+                                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-foreground mb-1 block">Canal</label>
+                                    <select
+                                        className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background"
+                                        value={form.channel}
+                                        onChange={(e) => setForm({ ...form, channel: e.target.value })}
+                                    >
+                                        {Object.entries(CHANNEL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-foreground mb-1 block">Cliente *</label>
+                                <select
+                                    className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background"
+                                    value={form.clientId}
+                                    onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+                                >
+                                    <option value="">Selecione o cliente</option>
+                                    {(clients || []).map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                                onClick={() => {
+                                    if (!form.clientId) return;
+                                    createMutation.mutate({ clientId: form.clientId, data: form });
+                                }}
+                                disabled={createMutation.isPending || !form.name || !form.clientId}
+                            >
+                                {createMutation.isPending ? 'Salvando...' : 'Salvar'}
+                            </button>
+                            <button
+                                className="flex-1 py-2.5 border border-border text-foreground rounded-xl text-sm font-medium hover:bg-muted transition"
+                                onClick={() => setShowModal(false)}
                             >
                                 Cancelar
                             </button>

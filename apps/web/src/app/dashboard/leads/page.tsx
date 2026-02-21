@@ -9,14 +9,14 @@ import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
 
 const STATUS_LABELS: Record<string, string> = {
-    NEW: 'Novo', CONTACTED: 'Contatado', QUALIFIED: 'Qualificado',
-    SCHEDULED: 'Agendado', ATTENDED: 'Compareceu', WON: 'Ganho', LOST: 'Perdido',
+    NOVO: 'Novo', EM_CONTATO: 'Em Contato', QUALIFICADO: 'Qualificado',
+    AGENDADO: 'Agendado', COMPARECEU: 'Compareceu', FECHADO: 'Ganho / Fechado', PERDIDO: 'Perdido',
 };
 const STATUS_COLORS: Record<string, string> = {
-    NEW: 'bg-slate-100 text-slate-700', CONTACTED: 'bg-blue-100 text-blue-700',
-    QUALIFIED: 'bg-yellow-100 text-yellow-700', SCHEDULED: 'bg-purple-100 text-purple-700',
-    ATTENDED: 'bg-indigo-100 text-indigo-700', WON: 'bg-green-100 text-green-700',
-    LOST: 'bg-red-100 text-red-700',
+    NOVO: 'bg-slate-100 text-slate-700', EM_CONTATO: 'bg-blue-100 text-blue-700',
+    QUALIFICADO: 'bg-yellow-100 text-yellow-700', AGENDADO: 'bg-purple-100 text-purple-700',
+    COMPARECEU: 'bg-indigo-100 text-indigo-700', FECHADO: 'bg-green-100 text-green-700',
+    PERDIDO: 'bg-red-100 text-red-700',
 };
 const CHANNEL_LABELS: Record<string, string> = {
     META: '📘 Meta', GOOGLE: '🔍 Google', ORGANIC: '🌱 Orgânico', REFERRAL: '👋 Indicação', OTHER: 'Outro',
