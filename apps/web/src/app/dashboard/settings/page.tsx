@@ -40,6 +40,8 @@ export default function SettingsPage() {
     const [showConnModal, setShowConnModal] = useState(false);
     const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'COMMERCIAL', clientIds: [] as string[] });
     const [connForm, setConnForm] = useState({ clientId: '', channel: 'META' });
+    const [showInlineClientCreate, setShowInlineClientCreate] = useState(false);
+    const [newClientName, setNewClientName] = useState('');
     const [syncLoading, setSyncLoading] = useState<string | null>(null);
     const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
@@ -55,6 +57,16 @@ export default function SettingsPage() {
     const deleteConnMutation = useMutation({
         mutationFn: (id: string) => adsApi.deleteConnection(id),
         onSuccess: () => qc.invalidateQueries({ queryKey: ['connections'] }),
+    });
+
+    const createClientMutation = useMutation({
+        mutationFn: (data: { name: string; slug: string }) => clientsApi.create(data),
+        onSuccess: (data: any) => {
+            qc.invalidateQueries({ queryKey: ['clients'] });
+            setConnForm({ ...connForm, clientId: data.id });
+            setShowInlineClientCreate(false);
+            setNewClientName('');
+        },
     });
 
     async function handleSync(id: string) {
@@ -316,12 +328,51 @@ export default function SettingsPage() {
 
                         <div className="space-y-6">
                             <div>
-                                <label className="text-xs font-black uppercase text-muted-foreground mb-2 ml-1 block">Selecione o Cliente</label>
-                                <select className="w-full h-14 px-5 rounded-3xl bg-muted/30 border border-border text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none appearance-none cursor-pointer"
-                                    value={connForm.clientId} onChange={(e) => setConnForm({ ...connForm, clientId: e.target.value })}>
-                                    <option value="">Selecione um cliente...</option>
-                                    {(clients || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
+                                <div className="flex items-center justify-between mb-2 ml-1">
+                                    <label className="text-xs font-black uppercase text-muted-foreground">Selecione o Cliente</label>
+                                    <button
+                                        onClick={() => setShowInlineClientCreate(!showInlineClientCreate)}
+                                        className="text-[10px] font-black uppercase text-primary hover:underline">
+                                        {showInlineClientCreate ? '✕ Cancelar' : '+ Criar Novo'}
+                                    </button>
+                                </div>
+
+                                {showInlineClientCreate ? (
+                                    <div className="flex gap-2 animate-in slide-in-from-top-2 duration-200">
+                                        <input
+                                            type="text"
+                                            placeholder="Nome do novo cliente..."
+                                            className="flex-1 h-14 px-5 rounded-3xl bg-primary/5 border border-primary/20 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none"
+                                            value={newClientName}
+                                            onChange={(e) => setNewClientName(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    const slug = newClientName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                                    createClientMutation.mutate({ name: newClientName, slug });
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const slug = newClientName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                                createClientMutation.mutate({ name: newClientName, slug });
+                                            }}
+                                            disabled={!newClientName || createClientMutation.isPending}
+                                            className="h-14 px-6 bg-primary text-white rounded-[24px] text-xs font-black disabled:opacity-50">
+                                            {createClientMutation.isPending ? '...' : 'OK'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <select className="w-full h-14 px-5 rounded-3xl bg-muted/30 border border-border text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none appearance-none cursor-pointer"
+                                        value={connForm.clientId} onChange={(e) => setConnForm({ ...connForm, clientId: e.target.value })}>
+                                        <option value="">Selecione um cliente...</option>
+                                        {(clients || []).map((c: any) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name} {c.slug?.includes('demo') ? '(DEMO)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

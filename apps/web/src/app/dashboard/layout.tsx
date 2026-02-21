@@ -11,10 +11,11 @@ const navItems = [
     { href: '/dashboard/appointments', label: 'Agendamentos', icon: '📅' },
     { href: '/dashboard/campaigns', label: 'Campanhas', icon: '📡' },
     { href: '/dashboard/reports', label: 'Relatórios', icon: '📈' },
+    { href: '/dashboard/clients', label: 'Clientes', icon: '🏥' },
     { href: '/dashboard/settings', label: 'Configurações', icon: '⚙️' },
 ];
 
-const ADMIN_ONLY = ['/dashboard/settings'];
+const ADMIN_ONLY = ['/dashboard/settings', '/dashboard/clients'];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();

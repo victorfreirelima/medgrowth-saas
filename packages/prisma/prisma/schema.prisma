@@ -55,6 +55,11 @@ enum ConnectionStatus {
   DISCONNECTED
 }
 
+enum ClientStatus {
+  ACTIVE
+  ARCHIVED
+}
+
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
@@ -76,13 +81,17 @@ model User {
 }
 
 model Client {
-  id        String   @id @default(uuid())
+  id        String       @id @default(uuid())
   name      String
-  slug      String   @unique
+  slug      String       @unique
   logoUrl   String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    ClientStatus @default(ACTIVE)
+  specialty String?
+  city      String?
+  notes     String?
+  isActive  Boolean      @default(true) // Keep for compatibility if needed, but status is primary now
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   users       UserClient[]
   leads       Lead[]

@@ -75,6 +75,7 @@ export const clientsApi = {
     create: (data: unknown) => api.post('/clients', data).then((r) => r.data),
     update: (id: string, data: unknown) =>
         api.patch(`/clients/${id}`, data).then((r) => r.data),
+    delete: (id: string) => api.delete(`/clients/${id}`).then((r) => r.data),
 };
 
 export const usersApi = {

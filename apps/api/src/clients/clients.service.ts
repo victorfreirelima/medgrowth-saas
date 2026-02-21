@@ -1,18 +1,28 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserRole } from '@prisma/client';
+import { UserRole, ClientStatus } from '@prisma/client';
 
 @Injectable()
 export class ClientsService {
     constructor(private readonly prisma: PrismaService) { }
 
-    async findAll(user: any) {
-        if (user.role === UserRole.ADMIN) {
-            return this.prisma.client.findMany({ orderBy: { name: 'asc' } });
+    async findAll(user: any, status?: ClientStatus) {
+        const where: any = {};
+
+        if (status) {
+            where.status = status;
         }
+
+        if (user.role !== UserRole.ADMIN) {
+            where.id = { in: user.clientIds };
+        }
+
         return this.prisma.client.findMany({
-            where: { id: { in: user.clientIds } },
+            where,
             orderBy: { name: 'asc' },
+            include: {
+                _count: { select: { leads: true, connections: true } }
+            }
         });
     }
 
@@ -31,11 +41,19 @@ export class ClientsService {
         return client;
     }
 
-    async create(dto: { name: string; slug: string; logoUrl?: string }) {
+    async create(dto: { name: string; slug: string; specialty?: string; city?: string; notes?: string; logoUrl?: string }) {
         return this.prisma.client.create({ data: dto });
     }
 
-    async update(id: string, dto: { name?: string; slug?: string; logoUrl?: string; isActive?: boolean }) {
+    async update(id: string, dto: { name?: string; slug?: string; logoUrl?: string; status?: ClientStatus; specialty?: string; city?: string; notes?: string; isActive?: boolean }) {
         return this.prisma.client.update({ where: { id }, data: dto });
+    }
+
+    async remove(id: string) {
+        // Soft delete: set status to ARCHIVED
+        return this.prisma.client.update({
+            where: { id },
+            data: { status: ClientStatus.ARCHIVED }
+        });
     }
 }
