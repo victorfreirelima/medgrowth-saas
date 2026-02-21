@@ -58,11 +58,20 @@ export default function LeadsPage() {
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<Lead> }) => leadsApi.update(id, data),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['leads'] });
+            qc.invalidateQueries({ queryKey: ['leads-pipeline'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
+        },
     });
     const createMutation = useMutation({
         mutationFn: ({ clientId, data }: { clientId: string; data: Partial<Lead> }) => leadsApi.create(clientId, data),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['leads'] }); setShowModal(false); },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['leads'] });
+            qc.invalidateQueries({ queryKey: ['leads-pipeline'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
+            setShowModal(false);
+        },
     });
 
     const [form, setForm] = useState({ name: '', phone: '', email: '', channel: 'META', clientId: '', campaignName: '' });

@@ -103,7 +103,9 @@ export default function PipelinePage() {
     const updateMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: any }) => leadsApi.update(id, data),
         onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['leads'] });
             qc.invalidateQueries({ queryKey: ['leads-pipeline'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
             setPendingUpdate(null);
             setRevenue('');
             setLostReason('');
@@ -113,7 +115,9 @@ export default function PipelinePage() {
     const createMutation = useMutation({
         mutationFn: ({ clientId, data }: { clientId: string; data: Partial<Lead> }) => leadsApi.create(clientId, data),
         onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['leads'] });
             qc.invalidateQueries({ queryKey: ['leads-pipeline'] });
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
             setShowModal(false);
             setForm({ name: '', phone: '', email: '', channel: 'META', clientId: '', campaignName: '' });
         },
