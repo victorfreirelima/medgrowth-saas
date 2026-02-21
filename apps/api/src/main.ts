@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, RawBodyRequest } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
@@ -26,6 +26,7 @@ async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(
         AppModule,
         new FastifyAdapter({ logger: false }),
+        { rawBody: true }, // Enable raw body for signature validation
     );
 
     // CORS

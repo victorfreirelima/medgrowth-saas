@@ -102,3 +102,19 @@ export const adsApi = {
     getGoogleOAuthUrl: (clientId: string) =>
         api.get('/ads/google/oauth-url', { params: { clientId } }).then((r) => r.data),
 };
+
+export const integrationsApi = {
+    list: (clientId?: string) =>
+        api.get('/integrations', { params: { clientId } }).then((r) => r.data),
+    save: (data: unknown) => api.post('/integrations', data).then((r) => r.data),
+    getMetaPages: (clientId: string) =>
+        api.get('/integrations/meta/pages', { params: { clientId } }).then((r) => r.data),
+    getMetaForms: (clientId: string, pageId: string) =>
+        api.get(`/integrations/meta/pages/${pageId}/forms`, { params: { clientId } }).then((r) => r.data),
+    subscribeMeta: (clientId: string, pageId: string) =>
+        api.post('/integrations/meta/subscribe', { clientId, pageId }).then((r) => r.data),
+    rotateIngestKey: (clientId: string) =>
+        api.post('/integrations/ingest-key/rotate', { clientId }).then((r) => r.data),
+    testIngest: (clientSlug: string, apiKey: string) =>
+        api.post('/integrations/ingest-test', { clientSlug, apiKey }).then((r) => r.data),
+};
