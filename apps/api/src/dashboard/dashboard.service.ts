@@ -46,7 +46,7 @@ export class DashboardService {
             }),
             this.prisma.lead.count({ where: { ...leadWhere, createdAt: Object.keys(dateFilter).length ? dateFilter : { gte: dateFromDefault } } }),
             this.prisma.appointment.count({ where: appointmentWhere }),
-            this.prisma.lead.count({ where: { ...leadWhere, status: 'WON' } }),
+            this.prisma.lead.count({ where: { ...leadWhere, status: 'FECHADO' as any } }),
         ]);
 
         const totalSpend = snapshotAgg._sum.spend || 0;
