@@ -26,7 +26,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!session?.user) {
+        if (!session?.user || (typeof window !== 'undefined' && window.location.pathname === '/login')) {
             setIsLoading(false);
             return;
         }
