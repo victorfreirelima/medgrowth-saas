@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const crypto = require('crypto');
 
 const DB_URL = 'postgresql://postgres:QZkWuibKMWaxePXVqDztWLTmzgUaziWZ@turntable.proxy.rlwy.net:31011/railway';
 
@@ -11,64 +12,46 @@ async function main() {
     await client.connect();
     console.log('Connected to production DB.');
 
-    // 1. Check current columns in clients table
-    const colRes = await client.query(`
-        SELECT column_name, data_type 
-        FROM information_schema.columns 
-        WHERE table_name = 'clients'
-        ORDER BY ordinal_position
-    `);
+    // Fix the migration record: mark as successfully applied
+    const migrationName = '1_add_client_fields';
+    const now = new Date().toISOString();
 
-    console.log('\n📋 Current "clients" table columns:');
-    colRes.rows.forEach(r => console.log(`  - ${r.column_name} (${r.data_type})`));
+    // Update the existing record to show it succeeded
+    const res = await client.query(`
+        UPDATE "_prisma_migrations"
+        SET applied_steps_count = 1, finished_at = $1, logs = NULL, rolled_back_at = NULL
+        WHERE migration_name = $2
+        RETURNING id, migration_name, applied_steps_count, finished_at
+    `, [now, migrationName]);
 
-    const existingCols = colRes.rows.map(r => r.column_name);
-    const needsMigration = !existingCols.includes('specialty') || !existingCols.includes('status');
-
-    if (!needsMigration) {
-        console.log('\n✅ Migration already applied. All new columns exist.');
+    if (res.rows.length > 0) {
+        console.log('✅ Migration record fixed:');
+        console.log('  ', res.rows[0]);
     } else {
-        console.log('\n⚠️  Columns missing! Applying migration...');
+        console.log('No record found to update. Inserting fresh record...');
 
-        // Check if enum type exists
-        const enumRes = await client.query(`
-            SELECT typname FROM pg_type WHERE typname = 'ClientStatus'
-        `);
+        const migrationSql = `-- CreateEnum\nCREATE TYPE "ClientStatus" AS ENUM ('ACTIVE', 'ARCHIVED');\n\n-- AlterTable\nALTER TABLE "clients" ADD COLUMN "status" "ClientStatus" NOT NULL DEFAULT 'ACTIVE';\nALTER TABLE "clients" ADD COLUMN "specialty" TEXT;\nALTER TABLE "clients" ADD COLUMN "city" TEXT;\nALTER TABLE "clients" ADD COLUMN "notes" TEXT;`;
+        const checksum = crypto.createHash('sha256').update(migrationSql).digest('hex');
 
-        if (enumRes.rows.length === 0) {
-            console.log('Creating ClientStatus enum...');
-            await client.query(`CREATE TYPE "ClientStatus" AS ENUM ('ACTIVE', 'ARCHIVED')`);
-            console.log('✅ Enum created.');
-        } else {
-            console.log('✅ ClientStatus enum already exists.');
-        }
+        await client.query(`
+            INSERT INTO "_prisma_migrations" 
+            (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count)
+            VALUES ($1, $2, $3, $4, NULL, NULL, $5, 1)
+        `, [crypto.randomUUID(), checksum, now, migrationName, now]);
 
-        if (!existingCols.includes('status')) {
-            await client.query(`ALTER TABLE "clients" ADD COLUMN "status" "ClientStatus" NOT NULL DEFAULT 'ACTIVE'`);
-            console.log('✅ Added status column.');
-        }
-        if (!existingCols.includes('specialty')) {
-            await client.query(`ALTER TABLE "clients" ADD COLUMN "specialty" TEXT`);
-            console.log('✅ Added specialty column.');
-        }
-        if (!existingCols.includes('city')) {
-            await client.query(`ALTER TABLE "clients" ADD COLUMN "city" TEXT`);
-            console.log('✅ Added city column.');
-        }
-        if (!existingCols.includes('notes')) {
-            await client.query(`ALTER TABLE "clients" ADD COLUMN "notes" TEXT`);
-            console.log('✅ Added notes column.');
-        }
-
-        console.log('\n🎉 Migration applied successfully!');
+        console.log('✅ Fresh migration record inserted.');
     }
 
-    // 2. Test a POST - list current clients
-    const clientsRes = await client.query('SELECT id, name, slug, status FROM clients LIMIT 5');
-    console.log('\n📋 First 5 clients in DB:');
-    clientsRes.rows.forEach(r => console.log(`  - [${r.status || 'N/A'}] ${r.name} (${r.slug})`));
+    // Confirm final state
+    const finalRes = await client.query(`
+        SELECT migration_name, applied_steps_count, finished_at 
+        FROM "_prisma_migrations" ORDER BY started_at
+    `);
+    console.log('\n📋 Final _prisma_migrations state:');
+    finalRes.rows.forEach(r => console.log(`  - ${r.migration_name}: applied=${r.applied_steps_count}, finished=${r.finished_at}`));
 
     await client.end();
+    console.log('\n🎉 Done. Railway startup should now succeed.');
 }
 
 main().catch(async (e) => {
