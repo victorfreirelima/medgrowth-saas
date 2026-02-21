@@ -15,6 +15,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { IngestModule } from './ingest/ingest.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { AppController } from './app.controller';
+import { PublicController } from './public.controller';
 
 @Module({
     imports: [
@@ -63,6 +64,6 @@ import { AppController } from './app.controller';
         IngestModule,
         IntegrationsModule,
     ],
-    controllers: [AppController]
+    controllers: [AppController, PublicController]
 })
 export class AppModule { }
