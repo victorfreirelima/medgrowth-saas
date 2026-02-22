@@ -62,7 +62,7 @@
     @apply bg-sidebar-accent text-sidebar-foreground;
   }
   .kpi-card {
-    @apply bg-white rounded-2xl p-6 border border-border shadow-sm 
+    @apply bg-white rounded-2xl p-4 xl:p-5 2xl:p-6 border border-border shadow-sm 
            hover:shadow-md transition-all duration-300 hover:-translate-y-0.5;
   }
   .status-badge {

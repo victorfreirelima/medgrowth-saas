@@ -12,14 +12,16 @@ function KPICard({ title, value, subtitle, icon, color }: {
     title: string; value: string; subtitle?: string; icon: string; color: string;
 }) {
     return (
-        <div className="kpi-card relative overflow-hidden">
-            <div className="flex items-start justify-between gap-2">
+        <div className="kpi-card relative overflow-hidden flex flex-col justify-center">
+            <div className="flex items-center justify-between gap-1 sm:gap-2">
                 <div className="min-w-0 flex-1">
-                    <p className="text-muted-foreground text-sm font-medium truncate" title={title}>{title}</p>
-                    <p className={`text-2xl xl:text-xl 2xl:text-2xl font-bold mt-1 truncate ${color}`} title={value}>{value}</p>
-                    {subtitle && <p className="text-xs text-muted-foreground mt-1 truncate" title={subtitle}>{subtitle}</p>}
+                    <p className="text-muted-foreground text-xs sm:text-sm font-medium truncate" title={title}>{title}</p>
+                    <p className={`text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 truncate ${color}`} title={value}>{value}</p>
+                    {subtitle && <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate" title={subtitle}>{subtitle}</p>}
                 </div>
-                <span className="text-2xl sm:text-3xl flex-shrink-0">{icon}</span>
+                <div className="flex-shrink-0 flex items-center justify-center text-xl sm:text-2xl ml-1">
+                    {icon}
+                </div>
             </div>
         </div>
     );
@@ -60,7 +62,7 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7 gap-3 sm:gap-4">
                 {(loadingKPIs || loadingROI) ? (
                     Array.from({ length: 7 }).map((_, i) => (
                         <div key={i} className="kpi-card animate-pulse">
