@@ -36,8 +36,9 @@ async function bootstrap() {
     // CORS
     app.enableCors({
         origin: (origin, callback) => {
-            const allowed = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
-            if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+            const allowed = (process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000']).map(o => o.trim());
+            const isVercel = origin && (origin.endsWith('.vercel.app') || origin === 'https://medgrowth-saas.vercel.app');
+            if (!origin || allowed.includes(origin) || isVercel) {
                 callback(null, true);
             } else {
                 callback(new Error('Not allowed by CORS'));
