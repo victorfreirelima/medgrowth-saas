@@ -12,14 +12,14 @@ function KPICard({ title, value, subtitle, icon, color }: {
     title: string; value: string; subtitle?: string; icon: string; color: string;
 }) {
     return (
-        <div className="kpi-card">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-muted-foreground text-sm font-medium">{title}</p>
-                    <p className={`text-3xl font-bold mt-1 ${color}`}>{value}</p>
-                    {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+        <div className="kpi-card relative overflow-hidden">
+            <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                    <p className="text-muted-foreground text-sm font-medium truncate" title={title}>{title}</p>
+                    <p className={`text-2xl xl:text-xl 2xl:text-2xl font-bold mt-1 truncate ${color}`} title={value}>{value}</p>
+                    {subtitle && <p className="text-xs text-muted-foreground mt-1 truncate" title={subtitle}>{subtitle}</p>}
                 </div>
-                <span className="text-3xl">{icon}</span>
+                <span className="text-2xl sm:text-3xl flex-shrink-0">{icon}</span>
             </div>
         </div>
     );
