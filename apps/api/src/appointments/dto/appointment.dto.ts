@@ -14,7 +14,7 @@ export class CreateAppointmentDto {
 export class UpdateAppointmentDto extends PartialType(CreateAppointmentDto) { }
 
 export class AppointmentFiltersDto {
-    @ApiPropertyOptional() @IsOptional() @IsUUID() clientId?: string;
+    @ApiPropertyOptional() @IsOptional() @IsString() clientId?: string;
     @ApiPropertyOptional({ enum: AppointmentStatus }) @IsOptional() @IsEnum(AppointmentStatus) status?: AppointmentStatus;
     @ApiPropertyOptional() @IsOptional() @IsDateString() dateFrom?: string;
     @ApiPropertyOptional() @IsOptional() @IsDateString() dateTo?: string;
