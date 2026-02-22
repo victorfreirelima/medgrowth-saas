@@ -41,13 +41,17 @@ export default function CampaignsPage() {
                     { label: 'Clicks', value: totalClicks.toLocaleString('pt-BR'), icon: '🖱️', color: 'text-purple-600' },
                     { label: 'Leads (Ads)', value: String(totalLeads), icon: '🎯', color: 'text-orange-500' },
                 ].map((card) => (
-                    <div key={card.label} className="kpi-card relative overflow-hidden">
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs text-muted-foreground truncate" title={card.label}>{card.label}</p>
-                                <p className={`text-xl font-bold mt-1 truncate ${card.color}`} title={card.value}>{card.value}</p>
+                    <div key={card.label} className="kpi-card flex flex-col justify-between">
+                        <div className="flex flex-row items-center justify-between pb-2 space-x-2">
+                            <p className="text-sm font-medium text-muted-foreground truncate" title={card.label}>
+                                {card.label}
+                            </p>
+                            <div className="text-xl opacity-80 flex-shrink-0">{card.icon}</div>
+                        </div>
+                        <div>
+                            <div className={`text-2xl font-bold truncate ${card.color}`} title={card.value}>
+                                {card.value}
                             </div>
-                            <span className="text-2xl flex-shrink-0">{card.icon}</span>
                         </div>
                     </div>
                 ))}

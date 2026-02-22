@@ -12,16 +12,22 @@ function KPICard({ title, value, subtitle, icon, color }: {
     title: string; value: string; subtitle?: string; icon: string; color: string;
 }) {
     return (
-        <div className="kpi-card relative overflow-hidden flex flex-col justify-center">
-            <div className="flex items-center justify-between gap-1 sm:gap-2">
-                <div className="min-w-0 flex-1">
-                    <p className="text-muted-foreground text-xs sm:text-sm font-medium truncate" title={title}>{title}</p>
-                    <p className={`text-xl sm:text-2xl font-bold mt-0.5 sm:mt-1 truncate ${color}`} title={value}>{value}</p>
-                    {subtitle && <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate" title={subtitle}>{subtitle}</p>}
+        <div className="kpi-card relative overflow-hidden flex flex-col justify-between">
+            <div className="flex flex-row items-center justify-between pb-2 space-x-2">
+                <p className="text-sm font-medium text-muted-foreground truncate" title={title}>
+                    {title}
+                </p>
+                <div className="text-xl opacity-80 flex-shrink-0">{icon}</div>
+            </div>
+            <div>
+                <div className={`text-2xl font-bold truncate ${color}`} title={value}>
+                    {value}
                 </div>
-                <div className="flex-shrink-0 flex items-center justify-center text-xl sm:text-2xl ml-1">
-                    {icon}
-                </div>
+                {subtitle && (
+                    <p className="text-xs text-muted-foreground mt-1 truncate" title={subtitle}>
+                        {subtitle}
+                    </p>
+                )}
             </div>
         </div>
     );
