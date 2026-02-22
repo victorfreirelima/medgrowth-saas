@@ -68,7 +68,7 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {(loadingKPIs || loadingROI) ? (
                     Array.from({ length: 7 }).map((_, i) => (
                         <div key={i} className="kpi-card animate-pulse">
