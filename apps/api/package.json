@@ -12,8 +12,8 @@
         "test:smoke": "ts-node src/scripts/smoke-test.ts"
     },
     "dependencies": {
-        "@fastify/csrf-protection": "^6.4.1",
-        "@fastify/helmet": "^13.0.2",
+        "@fastify/csrf-protection": "6.4.1",
+        "@fastify/helmet": "11.1.1",
         "@fastify/static": "7.0.3",
         "@medgrowth/prisma": "workspace:*",
         "@nestjs/bull": "^10.1.1",
