@@ -14,7 +14,6 @@ import {
     MapPin,
     Stethoscope,
     X,
-    CheckCircle,
     AlertCircle,
     Loader2,
 } from 'lucide-react';

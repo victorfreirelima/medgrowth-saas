@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
+import { FormInput } from '@/components/ui/FormInput';
 
 const schema = z.object({
     email: z.string().email('Email inválido'),
@@ -61,31 +62,29 @@ export default function LoginPage() {
                     <h2 className="text-xl font-semibold text-white mb-6">Entrar na plataforma</h2>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-blue-200 text-sm font-medium mb-1.5">Email</label>
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="seu@email.com"
-                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-blue-300/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-                                required
-                            />
-                        </div>
+                        <FormInput
+                            label="Email"
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="seu@email.com"
+                            autoComplete="email"
+                            required
+                        />
 
-                        <div>
-                            <label className="block text-blue-200 text-sm font-medium mb-1.5">Senha</label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-blue-300/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-                                required
-                            />
-                        </div>
+                        <FormInput
+                            label="Senha"
+                            id="password"
+                            name="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            autoComplete="current-password"
+                            required
+                        />
 
                         {error && (
                             <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200 text-sm">

@@ -21,7 +21,7 @@ export class LeadsService {
         const isAll = clientId === 'ALL' || !clientId;
         const allowedClientIds = user.role === UserRole.ADMIN
             ? (isAll ? undefined : [clientId])
-            : (isAll ? [] : (user.clientIds.includes(clientId) ? [clientId] : []));
+            : (isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []));
 
         const where: any = {
             ...(allowedClientIds ? { clientId: { in: allowedClientIds } } : {}),

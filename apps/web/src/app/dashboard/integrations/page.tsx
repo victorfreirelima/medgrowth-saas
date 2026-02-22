@@ -11,6 +11,7 @@ import {
 import api from '@/lib/api';
 import { useClient } from '@/contexts/ClientContext';
 import { toast } from 'sonner';
+import { FormInput } from '@/components/ui/FormInput';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -239,12 +240,15 @@ add_action('wpcf7_before_send_mail', function($cf7) {
                                     </p>
                                 ) : (
                                     <select
+                                        id="fb-page-select"
+                                        name="fb-page-select"
                                         className="w-full px-4 py-2.5 rounded-xl border border-border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                         value={selectedPageId}
                                         onChange={e => {
                                             setSelectedPageId(e.target.value);
                                             setSelectedPageName(metaPages.find((p: any) => p.id === e.target.value)?.name || '');
                                         }}
+                                        required
                                     >
                                         <option value="">-- Selecione uma Página --</option>
                                         {metaPages.map((p: any) => (
@@ -264,9 +268,10 @@ add_action('wpcf7_before_send_mail', function($cf7) {
                                         </div>
                                     ) : (
                                         <select
+                                            id="form-select"
+                                            name="form-select"
                                             className="w-full px-4 py-2.5 rounded-xl border border-border bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                             defaultValue=""
-                                            id="form-select"
                                         >
                                             <option value="">-- Selecione um Formulário (opcional) --</option>
                                             {metaForms.map((f: any) => (

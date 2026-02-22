@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi, clientsApi, adsApi } from '@/lib/api';
 import { useSession } from 'next-auth/react';
 import { useClient } from '@/contexts/ClientContext';
+import { FormInput } from '@/components/ui/FormInput';
 
 const ROLE_LABELS: Record<string, string> = {
     ADMIN: '👑 Admin', COMMERCIAL: '💼 Comercial', MANAGER: '👔 Gestor',
@@ -302,28 +303,53 @@ export default function SettingsPage() {
                     <div className="bg-white rounded-[32px] p-10 w-full max-w-md shadow-2xl border border-divider">
                         <h2 className="text-2xl font-black mb-6 text-foreground">Novo Usuário</h2>
                         <div className="space-y-4">
+                            <FormInput
+                                label="Nome Completo"
+                                id="user-name"
+                                name="user-name"
+                                placeholder="Ex: Victor Medeiros"
+                                className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/50 text-foreground"
+                                labelClassName="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block"
+                                value={userForm.name}
+                                onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                                autoComplete="name"
+                                required
+                            />
+                            <FormInput
+                                label="E-mail Profissional"
+                                id="user-email"
+                                name="user-email"
+                                type="email"
+                                placeholder="victor@medgrowth.com"
+                                className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/50 text-foreground"
+                                labelClassName="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block"
+                                value={userForm.email}
+                                onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                                autoComplete="email"
+                                required
+                            />
+                            <FormInput
+                                label="Senha de Acesso"
+                                id="user-password"
+                                name="user-password"
+                                type="password"
+                                placeholder="••••••••"
+                                className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/50 text-foreground"
+                                labelClassName="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block"
+                                value={userForm.password}
+                                onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                autoComplete="new-password"
+                                required
+                            />
                             <div>
-                                <label className="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block">Nome Completo</label>
-                                <input type="text" placeholder="Ex: Victor Medeiros"
-                                    className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/50"
-                                    value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block">E-mail Profissional</label>
-                                <input type="email" placeholder="victor@medgrowth.com"
-                                    className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/50"
-                                    value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block">Senha de Acesso</label>
-                                <input type="password" placeholder="••••••••"
-                                    className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/50"
-                                    value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block">Perfil de Acesso</label>
-                                <select className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
-                                    value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}>
+                                <label htmlFor="user-role" className="text-xs font-black uppercase text-muted-foreground mb-1.5 ml-1 block">Perfil de Acesso</label>
+                                <select
+                                    id="user-role"
+                                    name="user-role"
+                                    className="w-full h-12 px-4 rounded-2xl bg-muted/30 border border-border text-sm font-semibold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                                    value={userForm.role}
+                                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                                >
                                     <option value="COMMERCIAL">💼 Comercial (Vendas e Leads)</option>
                                     <option value="MANAGER">👔 Gestor/Cliente (Relatórios)</option>
                                     <option value="ADMIN">👑 Administrador (Acesso Total)</option>
@@ -364,10 +390,13 @@ export default function SettingsPage() {
 
                                 {showInlineClientCreate ? (
                                     <div className="flex gap-2 animate-in slide-in-from-top-2 duration-200">
-                                        <input
-                                            type="text"
+                                        <FormInput
+                                            label="Nome do cliente (Inline)"
+                                            id="new-client-name"
+                                            name="new-client-name"
                                             placeholder="Nome do novo cliente..."
-                                            className="flex-1 h-14 px-5 rounded-3xl bg-primary/5 border border-primary/20 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none"
+                                            className="flex-1 h-14 px-5 rounded-3xl bg-primary/5 border border-primary/20 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none text-foreground"
+                                            labelClassName="sr-only"
                                             value={newClientName}
                                             onChange={(e) => setNewClientName(e.target.value)}
                                             onKeyDown={(e) => {
@@ -376,6 +405,7 @@ export default function SettingsPage() {
                                                     createClientMutation.mutate({ name: newClientName, slug });
                                                 }
                                             }}
+                                            autoComplete="off"
                                         />
                                         <button
                                             onClick={() => {
@@ -388,8 +418,14 @@ export default function SettingsPage() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <select className="w-full h-14 px-5 rounded-3xl bg-muted/30 border border-border text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none appearance-none cursor-pointer"
-                                        value={connForm.clientId} onChange={(e) => setConnForm({ ...connForm, clientId: e.target.value })}>
+                                    <select
+                                        id="client-select"
+                                        name="client-select"
+                                        className="w-full h-14 px-5 rounded-3xl bg-muted/30 border border-border text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none appearance-none cursor-pointer"
+                                        value={connForm.clientId}
+                                        onChange={(e) => setConnForm({ ...connForm, clientId: e.target.value })}
+                                        required
+                                    >
                                         <option value="">Selecione um cliente...</option>
                                         {(clients || []).map((c: any) => (
                                             <option key={c.id} value={c.id}>

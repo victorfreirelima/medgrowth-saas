@@ -122,6 +122,7 @@ model UserClient {
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@id([userId, clientId])
+  @@index([clientId])
   @@map("user_clients")
 }
 

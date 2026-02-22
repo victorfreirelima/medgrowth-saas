@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { appointmentsApi, leadsApi } from '@/lib/api';
 import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
+import { FormInput } from '@/components/ui/FormInput';
 import { ptBR } from 'date-fns/locale';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -164,25 +165,43 @@ export default function AppointmentsPage() {
                         <h2 className="text-lg font-bold mb-4">Novo Agendamento</h2>
                         <div className="space-y-3">
                             <div>
-                                <label className="text-sm font-medium mb-1 block">Lead *</label>
-                                <select className="w-full px-3 py-2 rounded-xl border border-border text-sm"
-                                    value={form.leadId} onChange={(e) => setForm({ ...form, leadId: e.target.value })}>
+                                <label htmlFor="leadId" className="text-sm font-medium mb-1 block">Lead *</label>
+                                <select
+                                    id="leadId"
+                                    name="leadId"
+                                    className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background"
+                                    value={form.leadId}
+                                    onChange={(e) => setForm({ ...form, leadId: e.target.value })}
+                                    required
+                                >
                                     <option value="">Selecione o lead</option>
                                     {leadsData?.data?.map((l: Lead) => (
                                         <option key={l.id} value={l.id}>{l.name} — {l.client?.name}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div>
-                                <label className="text-sm font-medium mb-1 block">Data/Hora *</label>
-                                <input type="datetime-local" className="w-full px-3 py-2 rounded-xl border border-border text-sm"
-                                    value={form.dateTime} onChange={(e) => setForm({ ...form, dateTime: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium mb-1 block">Procedimento</label>
-                                <input placeholder="Ex: Botox, Consulta inicial..." className="w-full px-3 py-2 rounded-xl border border-border text-sm"
-                                    value={form.procedure} onChange={(e) => setForm({ ...form, procedure: e.target.value })} />
-                            </div>
+                            <FormInput
+                                label="Data/Hora *"
+                                id="dateTime"
+                                name="dateTime"
+                                type="datetime-local"
+                                className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none text-foreground bg-background"
+                                labelClassName="text-sm font-medium mb-1 block"
+                                value={form.dateTime}
+                                onChange={(e) => setForm({ ...form, dateTime: e.target.value })}
+                                required
+                            />
+                            <FormInput
+                                label="Procedimento"
+                                id="procedure"
+                                name="procedure"
+                                placeholder="Ex: Botox, Consulta inicial..."
+                                className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none text-foreground bg-background"
+                                labelClassName="text-sm font-medium mb-1 block"
+                                value={form.procedure}
+                                onChange={(e) => setForm({ ...form, procedure: e.target.value })}
+                                autoComplete="off"
+                            />
                         </div>
                         <div className="flex gap-3 mt-6">
                             <button className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition"

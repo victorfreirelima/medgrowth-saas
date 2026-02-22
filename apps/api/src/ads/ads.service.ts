@@ -35,7 +35,7 @@ export class AdsService {
         if (user.role === UserRole.ADMIN) {
             clientIds = isAll ? undefined : [clientId];
         } else {
-            clientIds = isAll ? [] : (user.clientIds.includes(clientId) ? [clientId] : []);
+            clientIds = isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []);
         }
 
         const connections = await this.prisma.adAccountConnection.findMany({
@@ -221,7 +221,7 @@ export class AdsService {
         });
 
         const { access_token, refresh_token, expires_in } = tokenRes.data;
-        const accountId = 'google-ads-account-id';
+        const accountId = `gads-pseudo-${Date.now()}`;
 
         return this.prisma.adAccountConnection.upsert({
             where: {

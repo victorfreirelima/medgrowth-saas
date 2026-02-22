@@ -8,6 +8,7 @@ import { useClient } from '@/contexts/ClientContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
+import { FormInput } from '@/components/ui/FormInput';
 
 const STATUS_LABELS: Record<string, string> = {
     NOVO: 'Novo', EM_CONTATO: 'Em Contato', QUALIFICADO: 'Qualificado',
@@ -105,31 +106,67 @@ export default function LeadsPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-2xl p-4 border border-border shadow-sm flex flex-wrap gap-3">
-                <select
-                    className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                    onChange={(e) => setFilters(f => ({ ...f, status: e.target.value || '' }))}
-                >
-                    <option value="">Todos os status</option>
-                    {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-                <select
-                    className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                    onChange={(e) => setFilters(f => ({ ...f, channel: e.target.value || '' }))}
-                >
-                    <option value="">Todos os canais</option>
-                    {Object.entries(CHANNEL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-                <input
-                    type="text"
-                    placeholder="Buscar nome, telefone..."
-                    className="px-3 py-2 rounded-lg border border-border text-sm bg-background flex-1 min-w-40"
-                    onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
-                />
-                <input type="date" className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                    onChange={(e) => setFilters(f => ({ ...f, dateFrom: e.target.value }))} />
-                <input type="date" className="px-3 py-2 rounded-lg border border-border text-sm bg-background"
-                    onChange={(e) => setFilters(f => ({ ...f, dateTo: e.target.value }))} />
+            <div className="bg-white rounded-2xl p-4 border border-border shadow-sm flex flex-wrap items-end gap-3">
+                <div className="space-y-1">
+                    <label htmlFor="status-filter" className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Status</label>
+                    <select
+                        id="status-filter"
+                        name="status-filter"
+                        className="px-3 py-2 rounded-lg border border-border text-sm bg-background block"
+                        onChange={(e) => setFilters(f => ({ ...f, status: e.target.value || '' }))}
+                    >
+                        <option value="">Todos os status</option>
+                        {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                </div>
+
+                <div className="space-y-1">
+                    <label htmlFor="channel-filter" className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Canal</label>
+                    <select
+                        id="channel-filter"
+                        name="channel-filter"
+                        className="px-3 py-2 rounded-lg border border-border text-sm bg-background block"
+                        onChange={(e) => setFilters(f => ({ ...f, channel: e.target.value || '' }))}
+                    >
+                        <option value="">Todos os canais</option>
+                        {Object.entries(CHANNEL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                </div>
+
+                <div className="flex-1 min-w-40 space-y-1">
+                    <label htmlFor="search-filter" className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Pesquisar</label>
+                    <input
+                        id="search-filter"
+                        name="search-filter"
+                        type="text"
+                        placeholder="Buscar nome, telefone..."
+                        className="w-full px-3 py-2 rounded-lg border border-border text-sm bg-background"
+                        onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+                        autoComplete="off"
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label htmlFor="date-from" className="text-[10px] font-bold uppercase text-muted-foreground ml-1">De</label>
+                    <input
+                        id="date-from"
+                        name="date-from"
+                        type="date"
+                        className="px-3 py-2 rounded-lg border border-border text-sm bg-background block"
+                        onChange={(e) => setFilters(f => ({ ...f, dateFrom: e.target.value }))}
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label htmlFor="date-to" className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Até</label>
+                    <input
+                        id="date-to"
+                        name="date-to"
+                        type="date"
+                        className="px-3 py-2 rounded-lg border border-border text-sm bg-background block"
+                        onChange={(e) => setFilters(f => ({ ...f, dateTo: e.target.value }))}
+                    />
+                </div>
             </div>
 
             {/* Table */}
@@ -236,29 +273,33 @@ export default function LeadsPage() {
                     <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl">
                         <h2 className="text-lg font-bold mb-4">{selectedLead ? 'Editar Lead' : 'Novo Lead'}</h2>
                         <div className="space-y-3">
-                            <div>
-                                <label className="text-sm font-medium text-foreground mb-1 block">Nome *</label>
-                                <input
-                                    id="lead-name"
-                                    className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none"
-                                    value={selectedLead ? selectedLead.name : form.name}
-                                    onChange={(e) => selectedLead ? setSelectedLead({ ...selectedLead, name: e.target.value }) : setForm({ ...form, name: e.target.value })}
-                                />
-                            </div>
+                            <FormInput
+                                label="Nome *"
+                                id="lead-name"
+                                name="lead-name"
+                                className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none text-foreground bg-background"
+                                labelClassName="text-sm font-medium text-foreground mb-1 block"
+                                value={selectedLead ? selectedLead.name : form.name}
+                                onChange={(e) => selectedLead ? setSelectedLead({ ...selectedLead, name: e.target.value }) : setForm({ ...form, name: e.target.value })}
+                                autoComplete="name"
+                                required
+                            />
                             <div className="grid grid-cols-2 gap-3">
+                                <FormInput
+                                    label="Telefone"
+                                    id="lead-phone"
+                                    name="lead-phone"
+                                    className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none text-foreground bg-background"
+                                    labelClassName="text-sm font-medium text-foreground mb-1 block"
+                                    value={selectedLead ? selectedLead.phone || '' : form.phone}
+                                    onChange={(e) => selectedLead ? setSelectedLead({ ...selectedLead, phone: e.target.value }) : setForm({ ...form, phone: e.target.value })}
+                                    autoComplete="tel"
+                                />
                                 <div>
-                                    <label className="text-sm font-medium text-foreground mb-1 block">Telefone</label>
-                                    <input
-                                        id="lead-phone"
-                                        className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:ring-2 focus:ring-primary/30 outline-none"
-                                        value={selectedLead ? selectedLead.phone || '' : form.phone}
-                                        onChange={(e) => selectedLead ? setSelectedLead({ ...selectedLead, phone: e.target.value }) : setForm({ ...form, phone: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-foreground mb-1 block">Canal</label>
+                                    <label htmlFor="lead-channel" className="text-sm font-medium text-foreground mb-1 block">Canal</label>
                                     <select
                                         id="lead-channel"
+                                        name="lead-channel"
                                         className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background"
                                         value={selectedLead ? selectedLead.channel : form.channel}
                                         onChange={(e) => selectedLead ? setSelectedLead({ ...selectedLead, channel: e.target.value }) : setForm({ ...form, channel: e.target.value })}
@@ -269,12 +310,14 @@ export default function LeadsPage() {
                             </div>
                             {!selectedLead && (
                                 <div>
-                                    <label className="text-sm font-medium text-foreground mb-1 block">Cliente *</label>
+                                    <label htmlFor="lead-client" className="text-sm font-medium text-foreground mb-1 block">Cliente *</label>
                                     <select
                                         id="lead-client"
+                                        name="lead-client"
                                         className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background"
                                         value={form.clientId}
                                         onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+                                        required
                                     >
                                         <option value="">Selecione o cliente</option>
                                         {availableClients.map((c) => (

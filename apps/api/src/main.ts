@@ -4,6 +4,8 @@ import { ValidationPipe, Logger, RawBodyRequest } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
+import helmet from '@fastify/helmet';
+import fastifyCsrf from '@fastify/csrf-protection';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -32,6 +34,19 @@ async function bootstrap() {
     if (process.env.SENTRY_DSN) {
         Sentry.setupFastifyErrorHandler(app.getHttpAdapter().getInstance());
     }
+
+    // Security Hardening
+    await app.register(helmet, {
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: [`'self'`],
+                styleSrc: [`'self'`, `'unsafe-inline'`],
+                imgSrc: [`'self'`, 'data:', 'https:'],
+                scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
+            },
+        },
+    });
+    await app.register(fastifyCsrf);
 
     // CORS
     app.enableCors({

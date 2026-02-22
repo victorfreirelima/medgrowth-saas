@@ -35,4 +35,15 @@ export class PublicController {
         }
         return { success: true, fixedCount, message: 'Database encoding fixed!' };
     }
+
+    @Get('health')
+    async health() {
+        const db = await this.prisma.$queryRaw`SELECT 1`.then(() => 'up').catch(() => 'down');
+        // Basic check, could be expanded with Redis check if CacheManager injected
+        return {
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            services: { database: db },
+        };
+    }
 }
