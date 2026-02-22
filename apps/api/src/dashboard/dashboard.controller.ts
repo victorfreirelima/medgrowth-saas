@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
@@ -13,7 +14,7 @@ export class DashboardController {
 
     @Get('kpis')
     getKPIs(
-        @CurrentUser() user: any,
+        @CurrentUser() user: AuthUser,
         @Query('clientId') clientId?: string,
         @Query('dateFrom') dateFrom?: string,
         @Query('dateTo') dateTo?: string,
@@ -23,7 +24,7 @@ export class DashboardController {
 
     @Get('time-series')
     getTimeSeries(
-        @CurrentUser() user: any,
+        @CurrentUser() user: AuthUser,
         @Query('clientId') clientId?: string,
         @Query('days') days?: string,
     ) {
@@ -32,7 +33,7 @@ export class DashboardController {
 
     @Get('campaigns')
     getCampaigns(
-        @CurrentUser() user: any,
+        @CurrentUser() user: AuthUser,
         @Query('clientId') clientId?: string,
         @Query('dateFrom') dateFrom?: string,
         @Query('dateTo') dateTo?: string,

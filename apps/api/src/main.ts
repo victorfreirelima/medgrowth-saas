@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, BaseExceptionFilter } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe, Logger, RawBodyRequest } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -28,6 +28,10 @@ async function bootstrap() {
         new FastifyAdapter({ logger: false }),
         { rawBody: true }, // Enable raw body for signature validation
     );
+
+    if (process.env.SENTRY_DSN) {
+        Sentry.setupFastifyErrorHandler(app.getHttpAdapter().getInstance());
+    }
 
     // CORS
     app.enableCors({

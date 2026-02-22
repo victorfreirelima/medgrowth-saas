@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { useClient } from '@/contexts/ClientContext';
+import { toast } from 'sonner';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -38,22 +39,10 @@ function CopyButton({ text }: { text: string }) {
     );
 }
 
-type Toast = { id: string; type: 'success' | 'error'; message: string };
-function useToast() {
-    const [toasts, setToasts] = useState<Toast[]>([]);
-    const show = (type: 'success' | 'error', message: string) => {
-        const id = Math.random().toString(36).slice(2);
-        setToasts(p => [...p, { id, type, message }]);
-        setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 5000);
-    };
-    return { toasts, success: (m: string) => show('success', m), error: (m: string) => show('error', m) };
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function IntegrationsPage() {
     const { data: session } = useSession();
-    const toast = useToast();
     const qc = useQueryClient();
     const { selectedClientId, availableClients } = useClient();
     const [activeSnippetTab, setActiveSnippetTab] = useState<'js' | 'zapier' | 'make' | 'wordpress'>('js');
@@ -96,25 +85,21 @@ export default function IntegrationsPage() {
     const saveMeta = useMutation({
         mutationFn: (dto: any) => api.post('/integrations', dto).then(r => r.data),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['integrations'] }); toast.success('Configuração META salva!'); },
-        onError: (e: any) => toast.error(e?.response?.data?.message || 'Erro ao salvar.'),
     });
 
     const subscribeMeta = useMutation({
         mutationFn: () => api.post('/integrations/meta/subscribe', { clientId: selectedClientId, pageId: selectedPageId }).then(r => r.data),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['integrations'] }); toast.success('Webhook ativado! Leads META serão capturados automaticamente.'); },
-        onError: (e: any) => toast.error(e?.response?.data?.message || 'Erro ao ativar webhook.'),
     });
 
     const rotateKey = useMutation({
         mutationFn: () => api.post('/integrations/ingest-key/rotate', { clientId: selectedClientId }).then(r => r.data),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['integrations'] }); toast.success('API Key renovada!'); },
-        onError: (e: any) => toast.error('Erro ao renovar key.'),
     });
 
     const testIngest = useMutation({
         mutationFn: () => api.post('/integrations/ingest-test', { clientSlug: selectedClient?.slug, apiKey }).then(r => r.data),
         onSuccess: () => toast.success('Lead de teste criado! Verifique a lista de Leads.'),
-        onError: (e: any) => toast.error(e?.response?.data?.message || 'Erro no teste.'),
     });
 
     // ── Snippet content ──
@@ -187,15 +172,6 @@ add_action('wpcf7_before_send_mail', function($cf7) {
 
     return (
         <div className="space-y-8 pb-8">
-            {/* Toast Container */}
-            <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2">
-                {toast.toasts.map(t => (
-                    <div key={t.id} className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl text-sm font-semibold border ${t.type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'} animate-in slide-in-from-bottom-2 duration-200`}>
-                        {t.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                        {t.message}
-                    </div>
-                ))}
-            </div>
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -206,12 +182,12 @@ add_action('wpcf7_before_send_mail', function($cf7) {
             </div>
 
             {/* Headers */}
-            {selectedClientId === 'ALL' || !selectedClientId ? (
-                <div className="bg-amber-50 rounded-2xl p-8 border border-amber-200 text-center text-amber-800">
-                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-amber-500" />
-                    <h3 className="text-lg font-bold">Atenção Especial Admin</h3>
-                    <p className="mt-2 text-sm text-amber-700/80 max-w-md mx-auto">
-                        Para configurar o webhook do META Lead Ads ou a URL da API de leads (Make/Zapier), por favor selecione um cliente específico no cabeçalho acima.
+            {(!selectedClientId || selectedClientId === 'ALL') ? (
+                <div className="bg-white rounded-[32px] border border-border shadow-sm p-12 text-center">
+                    <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">🏢</div>
+                    <h2 className="text-xl font-bold mb-2">Selecione um Cliente</h2>
+                    <p className="text-muted-foreground">
+                        Para configurar o webhook do META Lead Ads ou a URL da API de leads (Make/Zapier),<br /> por favor selecione um cliente específico no cabeçalho acima.
                     </p>
                 </div>
             ) : (

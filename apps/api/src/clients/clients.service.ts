@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole, ClientStatus } from '@prisma/client';
@@ -6,7 +7,7 @@ import { UserRole, ClientStatus } from '@prisma/client';
 export class ClientsService {
     constructor(private readonly prisma: PrismaService) { }
 
-    async findAll(user: any, status?: ClientStatus) {
+    async findAll(user: AuthUser, status?: ClientStatus) {
         const where: any = {};
 
         if (status) {
@@ -26,7 +27,7 @@ export class ClientsService {
         });
     }
 
-    async findOne(user: any, id: string) {
+    async findOne(user: AuthUser, id: string) {
         if (user.role !== UserRole.ADMIN && !user.clientIds.includes(id)) {
             throw new ForbiddenException('No access to this client');
         }

@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
@@ -36,14 +37,14 @@ export class ClientsController {
 
     @Get()
     findAll(
-        @CurrentUser() user: any,
+        @CurrentUser() user: AuthUser,
         @Query('status') status?: ClientStatus
     ) {
         return this.clientsService.findAll(user, status);
     }
 
     @Get(':id')
-    findOne(@CurrentUser() user: any, @Param('id') id: string) {
+    findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
         return this.clientsService.findOne(user, id);
     }
 

@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeadDto, UpdateLeadDto, CreateLeadNoteDto, LeadFiltersDto } from './dto/lead.dto';
@@ -7,20 +8,20 @@ import { UserRole } from '@prisma/client';
 export class LeadsService {
     constructor(private readonly prisma: PrismaService) { }
 
-    private assertClientAccess(user: any, clientId: string) {
+    private assertClientAccess(user: AuthUser, clientId: string) {
         if (user.role === UserRole.ADMIN) return;
         if (!user.clientIds.includes(clientId)) {
             throw new ForbiddenException('No access to this client');
         }
     }
 
-    async findAll(user: any, filters: LeadFiltersDto) {
+    async findAll(user: AuthUser, filters: LeadFiltersDto) {
         const { clientId, status, channel, assignedToId, dateFrom, dateTo, search, page = 1, limit = 20 } = filters;
 
         const isAll = clientId === 'ALL' || !clientId;
         const allowedClientIds = user.role === UserRole.ADMIN
             ? (isAll ? undefined : [clientId])
-            : (isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []));
+            : (isAll ? [] : (user.clientIds.includes(clientId) ? [clientId] : []));
 
         const where: any = {
             ...(allowedClientIds ? { clientId: { in: allowedClientIds } } : {}),
@@ -60,7 +61,7 @@ export class LeadsService {
         return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
 
-    async findOne(user: any, id: string) {
+    async findOne(user: AuthUser, id: string) {
         const lead = await this.prisma.lead.findUnique({
             where: { id },
             include: {
@@ -78,7 +79,7 @@ export class LeadsService {
         return lead;
     }
 
-    async create(user: any, clientId: string, dto: CreateLeadDto) {
+    async create(user: AuthUser, clientId: string, dto: CreateLeadDto) {
         this.assertClientAccess(user, clientId);
         return this.prisma.lead.create({
             data: { ...dto, clientId },
@@ -89,7 +90,7 @@ export class LeadsService {
         });
     }
 
-    async update(user: any, id: string, dto: UpdateLeadDto) {
+    async update(user: AuthUser, id: string, dto: UpdateLeadDto) {
         const lead = await this.findOne(user, id);
         const data: any = { ...dto };
 
@@ -123,13 +124,13 @@ export class LeadsService {
         });
     }
 
-    async remove(user: any, id: string) {
+    async remove(user: AuthUser, id: string) {
         const lead = await this.findOne(user, id);
         await this.prisma.lead.delete({ where: { id: lead.id } });
         return { message: 'Lead deletado' };
     }
 
-    async addNote(user: any, leadId: string, dto: CreateLeadNoteDto) {
+    async addNote(user: AuthUser, leadId: string, dto: CreateLeadNoteDto) {
         const lead = await this.findOne(user, leadId);
         return this.prisma.leadNote.create({
             data: { leadId: lead.id, userId: user.id, content: dto.content },
@@ -137,11 +138,11 @@ export class LeadsService {
         });
     }
 
-    async getFunnelMetrics(user: any, clientId?: string) {
+    async getFunnelMetrics(user: AuthUser, clientId?: string) {
         const isAll = clientId === 'ALL' || !clientId;
         const allowedClientIds = user.role === UserRole.ADMIN
             ? (isAll ? undefined : [clientId])
-            : (isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []));
+            : (isAll ? [] : (user.clientIds.includes(clientId) ? [clientId] : []));
 
         const where: any = allowedClientIds ? { clientId: { in: allowedClientIds } } : {};
 
@@ -168,12 +169,12 @@ export class LeadsService {
         }));
     }
 
-    async getROIMetrics(user: any, clientId: string) {
+    async getROIMetrics(user: AuthUser, clientId: string) {
         this.assertClientAccess(user, clientId);
 
         // Fetch investment from campaign snapshots
         const investmentData = await this.prisma.campaignSnapshotDaily.aggregate({
-            where: { connection: { clientId } },
+            where: { clientId },
             _sum: { spend: true, leads: true },
         });
 

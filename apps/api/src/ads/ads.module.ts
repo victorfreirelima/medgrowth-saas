@@ -9,6 +9,11 @@ import { AdsSyncProcessor } from './ads.processor';
     imports: [
         BullModule.registerQueue({
             name: 'ads-sync',
+            defaultJobOptions: {
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 5000 },
+                removeOnComplete: true,
+            },
         }),
         JwtModule.register({}),
     ],

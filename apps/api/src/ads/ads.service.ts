@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -21,20 +22,20 @@ export class AdsService {
         this.encKey = this.config.get<string>('ENCRYPTION_KEY') || '12345678901234567890123456789012';
     }
 
-    private assertClientAccess(user: any, clientId: string) {
+    private assertClientAccess(user: AuthUser, clientId: string) {
         if (user.role !== UserRole.ADMIN && !user.clientIds.includes(clientId)) {
             throw new ForbiddenException('No access to this client');
         }
     }
 
-    async getConnections(user: any, clientId?: string) {
+    async getConnections(user: AuthUser, clientId?: string) {
         const isAll = clientId === 'ALL' || !clientId;
         let clientIds: string[] | undefined;
 
         if (user.role === UserRole.ADMIN) {
             clientIds = isAll ? undefined : [clientId];
         } else {
-            clientIds = isAll ? user.clientIds : (user.clientIds.includes(clientId) ? [clientId] : []);
+            clientIds = isAll ? [] : (user.clientIds.includes(clientId) ? [clientId] : []);
         }
 
         const connections = await this.prisma.adAccountConnection.findMany({
@@ -49,7 +50,7 @@ export class AdsService {
         }));
     }
 
-    async createConnection(user: any, dto: {
+    async createConnection(user: AuthUser, dto: {
         clientId: string;
         channel: AdChannel;
         accountId: string;
@@ -77,7 +78,7 @@ export class AdsService {
         });
     }
 
-    async deleteConnection(user: any, id: string) {
+    async deleteConnection(user: AuthUser, id: string) {
         const conn = await this.prisma.adAccountConnection.findUnique({
             where: { id }, select: { clientId: true },
         });
@@ -87,7 +88,7 @@ export class AdsService {
         return { message: 'Connection deleted' };
     }
 
-    async triggerSync(user: any, connectionId: string) {
+    async triggerSync(user: AuthUser, connectionId: string) {
         const conn = await this.prisma.adAccountConnection.findUnique({
             where: { id: connectionId },
         });

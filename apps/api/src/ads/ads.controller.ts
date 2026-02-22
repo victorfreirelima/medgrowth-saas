@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { IsEnum, IsString, IsOptional, IsUUID } from 'class-validator';
@@ -23,25 +24,25 @@ export class AdsController {
 
     @Get('connections')
     @UseGuards(JwtAuthGuard)
-    getConnections(@CurrentUser() user: any, @Query('clientId') clientId?: string) {
+    getConnections(@CurrentUser() user: AuthUser, @Query('clientId') clientId?: string) {
         return this.adsService.getConnections(user, clientId);
     }
 
     @Post('connections')
     @UseGuards(JwtAuthGuard)
-    createConnection(@CurrentUser() user: any, @Body() dto: CreateConnectionDto) {
+    createConnection(@CurrentUser() user: AuthUser, @Body() dto: CreateConnectionDto) {
         return this.adsService.createConnection(user, dto);
     }
 
     @Delete('connections/:id')
     @UseGuards(JwtAuthGuard)
-    deleteConnection(@CurrentUser() user: any, @Param('id') id: string) {
+    deleteConnection(@CurrentUser() user: AuthUser, @Param('id') id: string) {
         return this.adsService.deleteConnection(user, id);
     }
 
     @Post('connections/:id/sync')
     @UseGuards(JwtAuthGuard)
-    triggerSync(@CurrentUser() user: any, @Param('id') id: string) {
+    triggerSync(@CurrentUser() user: AuthUser, @Param('id') id: string) {
         return this.adsService.triggerSync(user, id);
     }
 

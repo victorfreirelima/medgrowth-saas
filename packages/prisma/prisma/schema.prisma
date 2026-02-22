@@ -83,10 +83,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  clients      UserClient[]
-  leads        Lead[]        @relation("AssignedLeads")
-  notes        LeadNote[]
-  auditLogs    AuditLog[]
+  clients   UserClient[]
+  leads     Lead[]       @relation("AssignedLeads")
+  notes     LeadNote[]
+  auditLogs AuditLog[]
 
   @@map("users")
 }
@@ -106,7 +106,9 @@ model Client {
 
   users        UserClient[]
   leads        Lead[]
+  appointments Appointment[]
   connections  AdAccountConnection[]
+  snapshots    CampaignSnapshotDaily[]
   auditLogs    AuditLog[]
   integrations ClientIntegration[]
 
@@ -124,44 +126,44 @@ model UserClient {
 }
 
 model Lead {
-  id             String      @id @default(uuid())
-  clientId       String
-  name           String
-  phone          String?
-  email          String?
-  origin         String?
-  channel        LeadChannel @default(OTHER)
-  source         LeadSource?
-  campaignId     String?
-  campaignName   String?
-  adsetId        String?
-  adId           String?
-  status         LeadStatus  @default(NOVO)
-  statusUpdatedAt DateTime   @default(now())
-  firstContactAt DateTime?
+  id              String      @id @default(uuid())
+  clientId        String
+  name            String
+  phone           String?
+  email           String?
+  origin          String?
+  channel         LeadChannel @default(OTHER)
+  source          LeadSource?
+  campaignId      String?
+  campaignName    String?
+  adsetId         String?
+  adId            String?
+  status          LeadStatus  @default(NOVO)
+  statusUpdatedAt DateTime    @default(now())
+  firstContactAt  DateTime?
   appointmentDate DateTime?
-  revenue        Float?
-  lostReason     String?
-  assignedToId   String?
-  observations   String?
-  utmSource      String?
-  utmMedium      String?
-  utmCampaign    String?
-  utmContent     String?
-  utmTerm        String?
-  gclid          String?
-  fbclid         String?
-  wbraid         String?
-  gbraid         String?
-  providerLeadId String?     @unique
-  rawPayload     Json?
-  formName       String?
-  pageUrl        String?
-  message        String?
-  deviceType     String?
-  timezone       String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  revenue         Float?
+  lostReason      String?
+  assignedToId    String?
+  observations    String?
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  utmContent      String?
+  utmTerm         String?
+  gclid           String?
+  fbclid          String?
+  wbraid          String?
+  gbraid          String?
+  providerLeadId  String?     @unique
+  rawPayload      Json?
+  formName        String?
+  pageUrl         String?
+  message         String?
+  deviceType      String?
+  timezone        String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   client       Client        @relation(fields: [clientId], references: [id])
   assignedTo   User?         @relation("AssignedLeads", fields: [assignedToId], references: [id])
@@ -191,6 +193,7 @@ model LeadNote {
 
 model Appointment {
   id        String            @id @default(uuid())
+  clientId  String
   leadId    String
   dateTime  DateTime
   procedure String?
@@ -199,8 +202,10 @@ model Appointment {
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  client Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  lead   Lead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
+  @@index([clientId])
   @@index([leadId])
   @@index([dateTime])
   @@map("appointments")
@@ -243,7 +248,7 @@ model AdAccountConnection {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
-  client    Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client    Client                  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   snapshots CampaignSnapshotDaily[]
 
   @@unique([clientId, channel, accountId])
@@ -252,6 +257,7 @@ model AdAccountConnection {
 
 model CampaignSnapshotDaily {
   id           String    @id @default(uuid())
+  clientId     String
   connectionId String
   date         DateTime  @db.Date
   campaignId   String
@@ -272,9 +278,11 @@ model CampaignSnapshotDaily {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  client     Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
   connection AdAccountConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
   @@unique([connectionId, date, campaignId, adsetId])
+  @@index([clientId])
   @@index([connectionId])
   @@index([date])
   @@index([channel])

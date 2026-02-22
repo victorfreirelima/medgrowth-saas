@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
@@ -32,6 +33,11 @@ api.interceptors.response.use(
             if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
                 window.location.href = '/login';
             }
+        } else if (error.response?.status >= 400 && typeof window !== 'undefined') {
+            const msg = error.response.data?.message || 'Ocorreu um erro na requisição.';
+            // Do not spam toasts if an array of validation errors is sent, just print the first or generic message.
+            const parsedMsg = Array.isArray(msg) ? msg[0] : msg;
+            toast.error(typeof parsedMsg === 'string' ? parsedMsg : 'Erro interno do servidor.');
         }
         return Promise.reject(error);
     },

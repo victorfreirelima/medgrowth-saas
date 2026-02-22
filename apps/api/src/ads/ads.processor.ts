@@ -54,9 +54,14 @@ export class AdsSyncProcessor extends WorkerHost {
 
             this.logger.log(`Sync completed for connection: ${connectionId}`);
             return { success: true };
-        } catch (error) {
+        } catch (error: any) {
             this.logger.error(`Sync failed for connection ${connectionId}: ${error.message}`);
-            Sentry.captureException(error);
+            Sentry.withScope((scope) => {
+                scope.setTag('connectionId', connectionId);
+                scope.setTag('clientId', connection.clientId);
+                scope.setTag('channel', connection.channel);
+                Sentry.captureException(error);
+            });
 
             await this.prisma.adAccountConnection.update({
                 where: { id: connection.id },
@@ -76,7 +81,7 @@ export class AdsSyncProcessor extends WorkerHost {
         const spend = Math.random() * 300 + 50;
         const leads = Math.floor(Math.random() * 10);
 
-        await (this.prisma.campaignSnapshotDaily as any).upsert({
+        await this.prisma.campaignSnapshotDaily.upsert({
             where: {
                 connectionId_date_campaignId_adsetId: {
                     connectionId: connection.id,
@@ -89,6 +94,7 @@ export class AdsSyncProcessor extends WorkerHost {
                 spend, leads, conversions: leads,
             },
             create: {
+                clientId: connection.clientId,
                 connectionId: connection.id,
                 date: today,
                 campaignId: 'meta-campaign-real-id-1',
@@ -113,7 +119,7 @@ export class AdsSyncProcessor extends WorkerHost {
         const spend = Math.random() * 200 + 30;
         const leads = Math.floor(Math.random() * 5);
 
-        await (this.prisma.campaignSnapshotDaily as any).upsert({
+        await this.prisma.campaignSnapshotDaily.upsert({
             where: {
                 connectionId_date_campaignId_adsetId: {
                     connectionId: connection.id,
@@ -126,6 +132,7 @@ export class AdsSyncProcessor extends WorkerHost {
                 spend, leads, conversions: leads,
             },
             create: {
+                clientId: connection.clientId,
                 connectionId: connection.id,
                 date: today,
                 campaignId: 'google-campaign-real-id-1',

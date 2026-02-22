@@ -20,11 +20,17 @@ describe('DashboardService - Metrics Calculations', () => {
         },
     };
 
+    const mockCacheManager = {
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn(),
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 DashboardService,
                 { provide: PrismaService, useValue: mockPrisma },
+                { provide: 'CACHE_MANAGER', useValue: mockCacheManager },
             ],
         }).compile();
         service = module.get<DashboardService>(DashboardService);
@@ -40,7 +46,7 @@ describe('DashboardService - Metrics Calculations', () => {
         mockPrisma.lead.count.mockResolvedValue(20); // CRM leads
         mockPrisma.appointment.count.mockResolvedValue(8);
 
-        const adminUser = { role: 'ADMIN', clientIds: [] };
+        const adminUser = { role: 'ADMIN', clientIds: [] } as any;
         const result = await service.getKPIs(adminUser);
 
         expect(result.spend).toBe(1000);
@@ -57,7 +63,7 @@ describe('DashboardService - Metrics Calculations', () => {
         mockPrisma.lead.count.mockResolvedValue(0);
         mockPrisma.appointment.count.mockResolvedValue(0);
 
-        const adminUser = { role: 'ADMIN', clientIds: [] };
+        const adminUser = { role: 'ADMIN', clientIds: [] } as any;
         const result = await service.getKPIs(adminUser);
 
         expect(result.cpl).toBe(0);
@@ -71,14 +77,14 @@ describe('DashboardService - Metrics Calculations', () => {
         mockPrisma.lead.count.mockResolvedValue(5);
         mockPrisma.appointment.count.mockResolvedValue(2);
 
-        const commercialUser = { role: 'COMMERCIAL', clientIds: ['client-1'] };
-        const result = await service.getKPIs(commercialUser);
+        const commercialUser = { id: 'comm-1', role: 'COMMERCIAL', clientIds: ['client-1'] } as any;
+        const result = await service.getKPIs(commercialUser, 'client-1');
 
         // Should call with clientId filter
         expect(mockPrisma.campaignSnapshotDaily.aggregate).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({
-                    connection: { clientId: { in: ['client-1'] } },
+                    clientId: { in: ['client-1'] },
                 }),
             }),
         );
@@ -95,11 +101,23 @@ describe('DashboardService - Metrics Calculations', () => {
             },
         ]);
 
-        const adminUser = { role: 'ADMIN', clientIds: [] };
+        const adminUser = { role: 'ADMIN', clientIds: [] } as any;
         const result = await service.getCampaigns(adminUser);
 
         expect(result).toHaveLength(1);
         expect(result[0].ctr).toBeCloseTo(3.0, 1); // 300/10000 * 100
         expect(result[0].cpc).toBeCloseTo(1.67, 1); // 500/300
+    });
+
+    it('returns cached result when available in CacheManager', async () => {
+        const cachedKPIs = { spend: 99, leads: 9 };
+        mockCacheManager.get.mockResolvedValue(cachedKPIs);
+
+        const adminUser = { id: 'admin-1', role: 'ADMIN', clientIds: [] } as any;
+        const result = await service.getKPIs(adminUser);
+
+        expect(mockCacheManager.get).toHaveBeenCalled();
+        expect(mockPrisma.campaignSnapshotDaily.aggregate).not.toHaveBeenCalled();
+        expect(result).toEqual(cachedKPIs);
     });
 });

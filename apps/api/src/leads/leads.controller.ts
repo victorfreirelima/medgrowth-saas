@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import {
     Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards,
 } from '@nestjs/common';
@@ -15,28 +16,28 @@ export class LeadsController {
     constructor(private readonly leadsService: LeadsService) { }
 
     @Get()
-    findAll(@CurrentUser() user: any, @Query() filters: LeadFiltersDto) {
+    findAll(@CurrentUser() user: AuthUser, @Query() filters: LeadFiltersDto) {
         return this.leadsService.findAll(user, filters);
     }
 
     @Get('funnel')
-    getFunnelMetrics(@CurrentUser() user: any, @Query('clientId') clientId?: string) {
+    getFunnelMetrics(@CurrentUser() user: AuthUser, @Query('clientId') clientId?: string) {
         return this.leadsService.getFunnelMetrics(user, clientId);
     }
 
     @Get('roi')
-    getROIMetrics(@CurrentUser() user: any, @Query('clientId') clientId: string) {
+    getROIMetrics(@CurrentUser() user: AuthUser, @Query('clientId') clientId: string) {
         return this.leadsService.getROIMetrics(user, clientId);
     }
 
     @Get(':id')
-    findOne(@CurrentUser() user: any, @Param('id') id: string) {
+    findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
         return this.leadsService.findOne(user, id);
     }
 
     @Post(':clientId')
     create(
-        @CurrentUser() user: any,
+        @CurrentUser() user: AuthUser,
         @Param('clientId') clientId: string,
         @Body() dto: CreateLeadDto,
     ) {
@@ -44,18 +45,18 @@ export class LeadsController {
     }
 
     @Patch(':id')
-    update(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: UpdateLeadDto) {
+    update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateLeadDto) {
         return this.leadsService.update(user, id, dto);
     }
 
     @Delete(':id')
-    remove(@CurrentUser() user: any, @Param('id') id: string) {
+    remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
         return this.leadsService.remove(user, id);
     }
 
     @Post(':id/notes')
     addNote(
-        @CurrentUser() user: any,
+        @CurrentUser() user: AuthUser,
         @Param('id') id: string,
         @Body() dto: CreateLeadNoteDto,
     ) {

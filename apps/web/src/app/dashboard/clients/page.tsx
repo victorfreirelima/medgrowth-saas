@@ -18,66 +18,12 @@ import {
     AlertCircle,
     Loader2,
 } from 'lucide-react';
-
-// ─── Simple Toast System ─────────────────────────────────────────────────────
-
-type Toast = { id: string; type: 'success' | 'error'; message: string };
-
-function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
-    return (
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none">
-            {toasts.map((t) => (
-                <div
-                    key={t.id}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-sm font-semibold pointer-events-auto border ${t.type === 'success'
-                        ? 'bg-green-50 text-green-800 border-green-200'
-                        : 'bg-red-50 text-red-800 border-red-200'
-                        } animate-in slide-in-from-bottom-2 duration-200`}
-                >
-                    {t.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                    <span>{t.message}</span>
-                    <button onClick={() => onRemove(t.id)} className="ml-2 opacity-60 hover:opacity-100">
-                        <X className="w-3 h-3" />
-                    </button>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function useToast() {
-    const [toasts, setToasts] = useState<Toast[]>([]);
-    const show = (type: 'success' | 'error', message: string) => {
-        const id = Math.random().toString(36).slice(2);
-        setToasts((prev) => [...prev, { id, type, message }]);
-        setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 5000);
-    };
-    const remove = (id: string) => setToasts((prev) => prev.filter((t) => t.id !== id));
-    return { toasts, success: (m: string) => show('success', m), error: (m: string) => show('error', m), remove };
-}
-
-// ─── Error parser ─────────────────────────────────────────────────────────────
-
-function parseApiError(err: any): string {
-    const status = err?.response?.status;
-    const data = err?.response?.data;
-
-    if (status === 401) return 'Sessão expirada. Faça login novamente.';
-    if (status === 403) return 'Sem permissão. Apenas ADMINs podem criar clientes.';
-    if (status === 409) return 'Slug já existe. Escolha um nome diferente.';
-
-    if (data?.message) {
-        if (Array.isArray(data.message)) return data.message.join(', ');
-        return String(data.message);
-    }
-    return err?.message || 'Erro desconhecido. Veja o console.';
-}
+import { toast } from 'sonner';
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ClientsPage() {
     const queryClient = useQueryClient();
-    const toast = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<any>(null);
@@ -98,10 +44,6 @@ export default function ClientsPage() {
             setIsCreateModalOpen(false);
             toast.success(`Cliente "${data.name}" criado com sucesso!`);
         },
-        onError: (err: any) => {
-            console.error('[ClientsAPI] POST /clients — error:', err?.response?.status, err?.response?.data ?? err?.message);
-            toast.error(parseApiError(err));
-        },
     });
 
     const updateMutation = useMutation({
@@ -115,10 +57,6 @@ export default function ClientsPage() {
             setEditingClient(null);
             toast.success('Cliente atualizado com sucesso!');
         },
-        onError: (err: any) => {
-            console.error('[ClientsAPI] PATCH — error:', err?.response?.status, err?.response?.data ?? err?.message);
-            toast.error(parseApiError(err));
-        },
     });
 
     const archiveMutation = useMutation({
@@ -126,10 +64,6 @@ export default function ClientsPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             toast.success('Cliente arquivado.');
-        },
-        onError: (err: any) => {
-            console.error('[ClientsAPI] DELETE — error:', err?.response?.status, err?.response?.data ?? err?.message);
-            toast.error(parseApiError(err));
         },
     });
 
@@ -140,7 +74,6 @@ export default function ClientsPage() {
 
     return (
         <div className="space-y-6">
-            <ToastContainer toasts={toast.toasts} onRemove={toast.remove} />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -300,7 +233,6 @@ export default function ClientsPage() {
                         }
                     }}
                     isSubmitting={createMutation.isPending || updateMutation.isPending}
-                    error={createMutation.isError ? parseApiError((createMutation as any).error) : updateMutation.isError ? parseApiError((updateMutation as any).error) : null}
                 />
             )}
         </div>
@@ -309,12 +241,11 @@ export default function ClientsPage() {
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
-function ClientModal({ client, onClose, onSubmit, isSubmitting, error }: {
+function ClientModal({ client, onClose, onSubmit, isSubmitting }: {
     client: any;
     onClose: () => void;
     onSubmit: (data: any) => void;
     isSubmitting: boolean;
-    error: string | null;
 }) {
     const [formData, setFormData] = useState({
         name: client?.name || '',
@@ -362,13 +293,6 @@ function ClientModal({ client, onClose, onSubmit, isSubmitting, error }: {
                             <X className="w-5 h-5" />
                         </button>
                     </div>
-
-                    {error && (
-                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm font-medium rounded-xl px-4 py-3">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            <span>{error}</span>
-                        </div>
-                    )}
 
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-2 gap-4">

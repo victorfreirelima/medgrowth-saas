@@ -1,12 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdChannel, UserRole } from '@prisma/client';
 
 @Injectable()
 export class DashboardService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    ) { }
 
-    private getClientFilter(user: any, clientId?: string) {
+    private getClientFilter(user: AuthUser, clientId?: string) {
         const isAll = clientId === 'ALL' || !clientId;
 
         if (user.role === UserRole.ADMIN) {
@@ -14,19 +20,19 @@ export class DashboardService {
         }
 
         if (isAll) {
-            return user.clientIds;
+            return []; // Non-admins cannot view cross-client aggregated dashboards
         }
 
         return user.clientIds.includes(clientId) ? [clientId] : [];
     }
 
-    async getKPIs(user: any, clientId?: string, dateFrom?: string, dateTo?: string) {
+    async getKPIs(user: AuthUser, clientId?: string, dateFrom?: string, dateTo?: string) {
+        const cacheKey = `kpis:${user.id}:${clientId || 'ALL'}:${dateFrom || 'ALL'}:${dateTo || 'ALL'}`;
+        const cached = await this.cacheManager.get<any>(cacheKey);
+        if (cached) return cached;
+
         const clientIds = this.getClientFilter(user, clientId);
-        const connectionWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
-        const leadWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
-        const appointmentWhere: any = clientIds
-            ? { lead: { clientId: { in: clientIds } } }
-            : {};
+        const clientWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
 
         const dateFilter = {
             ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
@@ -35,7 +41,7 @@ export class DashboardService {
         const dateFromDefault = new Date();
         dateFromDefault.setDate(dateFromDefault.getDate() - 30);
         const snapshotWhere: any = {
-            connection: connectionWhere,
+            ...clientWhere,
             date: Object.keys(dateFilter).length ? dateFilter : { gte: dateFromDefault },
         };
 
@@ -44,9 +50,9 @@ export class DashboardService {
                 where: snapshotWhere,
                 _sum: { spend: true, leads: true, clicks: true, impressions: true, conversions: true },
             }),
-            this.prisma.lead.count({ where: { ...leadWhere, createdAt: Object.keys(dateFilter).length ? dateFilter : { gte: dateFromDefault } } }),
-            this.prisma.appointment.count({ where: appointmentWhere }),
-            this.prisma.lead.count({ where: { ...leadWhere, status: 'FECHADO' as any } }),
+            this.prisma.lead.count({ where: { ...clientWhere, createdAt: Object.keys(dateFilter).length ? dateFilter : { gte: dateFromDefault } } }),
+            this.prisma.appointment.count({ where: { ...clientWhere } }),
+            this.prisma.lead.count({ where: { ...clientWhere, status: 'FECHADO' as any } }),
         ]);
 
         const totalSpend = snapshotAgg._sum.spend || 0;
@@ -54,7 +60,7 @@ export class DashboardService {
         const cpl = totalLeads > 0 ? totalSpend / totalLeads : 0;
         const cpa = appointmentCount > 0 ? totalSpend / appointmentCount : 0;
 
-        return {
+        const result = {
             spend: totalSpend,
             leads: totalLeads,
             cpl,
@@ -65,12 +71,18 @@ export class DashboardService {
             impressions: snapshotAgg._sum.impressions || 0,
             conversions: snapshotAgg._sum.conversions || 0,
         };
+
+        await this.cacheManager.set(cacheKey, result, 1800000); // 30 mins
+        return result;
     }
 
-    async getTimeSeries(user: any, clientId?: string, days = 30) {
+    async getTimeSeries(user: AuthUser, clientId?: string, days = 30) {
+        const cacheKey = `timeseries:${user.id}:${clientId || 'ALL'}:${days}`;
+        const cached = await this.cacheManager.get<any>(cacheKey);
+        if (cached) return cached;
+
         const clientIds = this.getClientFilter(user, clientId);
-        const connectionWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
-        const leadWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
+        const clientWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
 
         const from = new Date();
         from.setDate(from.getDate() - days);
@@ -78,13 +90,13 @@ export class DashboardService {
         const [snapshots, leads] = await Promise.all([
             this.prisma.campaignSnapshotDaily.groupBy({
                 by: ['date'],
-                where: { connection: connectionWhere, date: { gte: from } },
+                where: { ...clientWhere, date: { gte: from } },
                 _sum: { spend: true, leads: true, clicks: true },
                 orderBy: { date: 'asc' },
             }),
             this.prisma.lead.groupBy({
                 by: ['createdAt'],
-                where: { ...leadWhere, createdAt: { gte: from } },
+                where: { ...clientWhere, createdAt: { gte: from } },
                 _count: { id: true },
             }),
         ]);
@@ -96,7 +108,7 @@ export class DashboardService {
             leadsByDay[day] = (leadsByDay[day] || 0) + l._count.id;
         }
 
-        return snapshots.map((s) => {
+        const result = snapshots.map((s) => {
             const day = s.date instanceof Date ? s.date.toISOString().split('T')[0] : String(s.date);
             return {
                 date: day,
@@ -106,11 +118,18 @@ export class DashboardService {
                 crmLeads: leadsByDay[day] || 0,
             };
         });
+
+        await this.cacheManager.set(cacheKey, result, 1800000); // 30 mins
+        return result;
     }
 
-    async getCampaigns(user: any, clientId?: string, dateFrom?: string, dateTo?: string) {
+    async getCampaigns(user: AuthUser, clientId?: string, dateFrom?: string, dateTo?: string) {
+        const cacheKey = `campaigns:${user.id}:${clientId || 'ALL'}:${dateFrom || 'ALL'}:${dateTo || 'ALL'}`;
+        const cached = await this.cacheManager.get<any>(cacheKey);
+        if (cached) return cached;
+
         const clientIds = this.getClientFilter(user, clientId);
-        const connectionWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
+        const clientWhere: any = clientIds ? { clientId: { in: clientIds } } : {};
 
         const dateFromDefault = new Date();
         dateFromDefault.setDate(dateFromDefault.getDate() - 30);
@@ -121,12 +140,12 @@ export class DashboardService {
 
         const snapshots = await this.prisma.campaignSnapshotDaily.groupBy({
             by: ['campaignId', 'campaignName', 'channel'],
-            where: { connection: connectionWhere, date: dateFilter },
+            where: { ...clientWhere, date: dateFilter },
             _sum: { spend: true, impressions: true, clicks: true, leads: true, conversions: true },
             orderBy: { _sum: { spend: 'desc' } },
         });
 
-        return snapshots.map((s) => ({
+        const result = snapshots.map((s) => ({
             campaignId: s.campaignId,
             campaignName: s.campaignName,
             channel: s.channel,
@@ -138,5 +157,8 @@ export class DashboardService {
             leads: s._sum.leads || 0,
             conversions: s._sum.conversions || 0,
         }));
+
+        await this.cacheManager.set(cacheKey, result, 1800000); // 30 mins
+        return result;
     }
 }

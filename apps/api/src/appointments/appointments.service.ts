@@ -1,3 +1,4 @@
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppointmentDto, UpdateAppointmentDto, AppointmentFiltersDto } from './dto/appointment.dto';
@@ -7,15 +8,16 @@ import { UserRole } from '@prisma/client';
 export class AppointmentsService {
     constructor(private readonly prisma: PrismaService) { }
 
-    async findAll(user: any, filters: AppointmentFiltersDto) {
+    async findAll(user: AuthUser, filters: AppointmentFiltersDto) {
         const { clientId, status, dateFrom, dateTo, page = 1, limit = 20 } = filters;
 
+        const isAll = clientId === 'ALL' || !clientId;
         const allowedClientIds = user.role === UserRole.ADMIN
-            ? (clientId ? [clientId] : undefined)
-            : user.clientIds;
+            ? (isAll ? undefined : [clientId])
+            : (isAll ? [] : (user.clientIds.includes(clientId) ? [clientId] : []));
 
         const where: any = {
-            lead: allowedClientIds ? { clientId: { in: allowedClientIds } } : undefined,
+            ...(allowedClientIds ? { clientId: { in: allowedClientIds } } : {}),
             ...(status ? { status } : {}),
             ...(dateFrom || dateTo ? {
                 dateTime: {
@@ -46,7 +48,7 @@ export class AppointmentsService {
         return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
 
-    async findOne(user: any, id: string) {
+    async findOne(user: AuthUser, id: string) {
         const appointment = await this.prisma.appointment.findUnique({
             where: { id },
             include: {
@@ -65,7 +67,7 @@ export class AppointmentsService {
         return appointment;
     }
 
-    async create(user: any, dto: CreateAppointmentDto) {
+    async create(user: AuthUser, dto: CreateAppointmentDto) {
         const lead = await this.prisma.lead.findUnique({ where: { id: dto.leadId } });
         if (!lead) throw new NotFoundException('Lead not found');
         if (user.role !== UserRole.ADMIN && !user.clientIds.includes(lead.clientId)) {
@@ -73,6 +75,7 @@ export class AppointmentsService {
         }
         return this.prisma.appointment.create({
             data: {
+                clientId: lead.clientId,
                 leadId: dto.leadId,
                 dateTime: new Date(dto.dateTime),
                 procedure: dto.procedure,
@@ -83,7 +86,7 @@ export class AppointmentsService {
         });
     }
 
-    async update(user: any, id: string, dto: UpdateAppointmentDto) {
+    async update(user: AuthUser, id: string, dto: UpdateAppointmentDto) {
         await this.findOne(user, id);
         return this.prisma.appointment.update({
             where: { id },
@@ -97,7 +100,7 @@ export class AppointmentsService {
         });
     }
 
-    async remove(user: any, id: string) {
+    async remove(user: AuthUser, id: string) {
         await this.findOne(user, id);
         await this.prisma.appointment.delete({ where: { id } });
         return { message: 'Appointment deleted' };

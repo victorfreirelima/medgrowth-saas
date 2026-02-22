@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 import * as Sentry from '@sentry/nestjs';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -24,6 +26,21 @@ import { PublicController } from './public.controller';
             ttl: 60000,
             limit: 100,
         }]),
+        CacheModule.registerAsync({
+            isGlobal: true,
+            imports: [ConfigModule],
+            useFactory: async (config: ConfigService) => {
+                let url = config.get('REDIS_URL');
+                if (!url) {
+                    const host = config.get('REDIS_HOST', 'localhost');
+                    const port = config.get('REDIS_PORT', 6379);
+                    url = `redis://${host}:${port}`;
+                }
+                const store = await redisStore({ url, ttl: 1800000 }); // 30 mins defaults
+                return { store };
+            },
+            inject: [ConfigService],
+        }),
         BullModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (config: ConfigService) => {
