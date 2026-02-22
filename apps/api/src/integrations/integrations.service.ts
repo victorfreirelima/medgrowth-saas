@@ -56,21 +56,31 @@ export class IntegrationsService {
     }
 
     async getMetaPages(clientId: string) {
-        const token = await this.getClientToken(clientId);
-        const res = await axios.get(
-            `https://graph.facebook.com/${this.apiVersion}/me/accounts`,
-            { params: { access_token: token, fields: 'id,name,access_token,fan_count' } },
-        );
-        return res.data.data || [];
+        try {
+            const token = await this.getClientToken(clientId);
+            const res = await axios.get(
+                `https://graph.facebook.com/${this.apiVersion}/me/accounts`,
+                { params: { access_token: token, fields: 'id,name,access_token,fan_count' } },
+            );
+            return res.data.data || [];
+        } catch (e) {
+            if (e instanceof NotFoundException) return [];
+            throw e;
+        }
     }
 
     async getMetaForms(clientId: string, pageId: string) {
-        const token = await this.getPageToken(clientId, pageId);
-        const res = await axios.get(
-            `https://graph.facebook.com/${this.apiVersion}/${pageId}/leadgen_forms`,
-            { params: { access_token: token, fields: 'id,name,status,leads_count,created_time' } },
-        );
-        return res.data.data || [];
+        try {
+            const token = await this.getPageToken(clientId, pageId);
+            const res = await axios.get(
+                `https://graph.facebook.com/${this.apiVersion}/${pageId}/leadgen_forms`,
+                { params: { access_token: token, fields: 'id,name,status,leads_count,created_time' } },
+            );
+            return res.data.data || [];
+        } catch (e) {
+            if (e instanceof NotFoundException) return [];
+            throw e;
+        }
     }
 
     async subscribePageToWebhook(clientId: string, pageId: string) {
